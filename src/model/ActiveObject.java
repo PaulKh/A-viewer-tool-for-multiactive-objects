@@ -1,5 +1,7 @@
 package model;
 
+import supportModel.DeserializedLoggedData;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +9,6 @@ import java.util.List;
  * Created by pkhvoros on 3/13/15.
  */
 public class ActiveObject {
-    private static int idCounter=1;
     private String identifier;
     private List<ActiveObjectThread> threads = new ArrayList<ActiveObjectThread>();
 
@@ -15,12 +16,27 @@ public class ActiveObject {
         return identifier;
     }
 
-    public String setIdentifier(String identifier) {
-        String delims = "[.]";
-        String[] temp = identifier.split(delims);
-        delims = "[_]";
-        this.identifier = temp[temp.length - 1].split(delims)[0] + idCounter;
-        idCounter++;
-        return identifier;
+
+    public void setIdentifier(String identifier){
+        this.identifier = identifier;
+    }
+    public ActiveObjectThread addThreadWithId(int id){
+        for (ActiveObjectThread thread:threads){
+            if (thread.getThreadId() == id)
+                return thread;
+        }
+        ActiveObjectThread thread = new ActiveObjectThread(id);
+        threads.add(thread);
+        return thread;
+    }
+    public ActiveObjectThread getThreadWithId(int id){
+        for (ActiveObjectThread thread:threads)
+            if (thread.getThreadId() == id)
+                return thread;
+        return null;
+    }
+
+    public List<ActiveObjectThread> getThreads() {
+        return threads;
     }
 }

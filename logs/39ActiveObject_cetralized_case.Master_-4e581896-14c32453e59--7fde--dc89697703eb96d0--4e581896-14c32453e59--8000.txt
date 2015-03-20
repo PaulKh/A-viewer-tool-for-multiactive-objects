@@ -1,0 +1,20 @@
+ServeStarted
+ActiveObject_cetralized_case.Master_-4e581896-14c32453e59--7fde--dc89697703eb96d0--4e581896-14c32453e59--8000
+39
+Wrapper for method=prepareAction, sender=HalfBody_Main#performComputation_-4e581896-14c32453e59--7ff3--dc89697703eb96d0--4e581896-14c32453e59--8000, sequenceNumber=1686731968
+1426772543478
+ServeStopped
+ActiveObject_cetralized_case.Master_-4e581896-14c32453e59--7fde--dc89697703eb96d0--4e581896-14c32453e59--8000
+39
+Wrapper for method=prepareAction, sender=HalfBody_Main#performComputation_-4e581896-14c32453e59--7ff3--dc89697703eb96d0--4e581896-14c32453e59--8000, sequenceNumber=1686731968
+1426772543993
+ServeStarted
+ActiveObject_cetralized_case.Master_-4e581896-14c32453e59--7fde--dc89697703eb96d0--4e581896-14c32453e59--8000
+39
+Wrapper for method=startAction, sender=HalfBody_Main#performComputation_-4e581896-14c32453e59--7ff3--dc89697703eb96d0--4e581896-14c32453e59--8000, sequenceNumber=1686731969
+1426772544014
+ServeStopped
+ActiveObject_cetralized_case.Master_-4e581896-14c32453e59--7fde--dc89697703eb96d0--4e581896-14c32453e59--8000
+39
+Wrapper for method=startAction, sender=HalfBody_Main#performComputation_-4e581896-14c32453e59--7ff3--dc89697703eb96d0--4e581896-14c32453e59--8000, sequenceNumber=1686731969
+1426772546921

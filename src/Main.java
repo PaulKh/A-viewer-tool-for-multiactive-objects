@@ -1,4 +1,5 @@
 import org.apache.commons.io.FileUtils;
+import views.MainWindow;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,11 +9,9 @@ import java.io.IOException;
  */
 
 public class Main {
+    private static final String windowTitle = "Viewer tool for ProActive";
     public static void main(String[] args){
-        if(args != null || args.length > 0){
-            DataParser.parseData(args[0]);
-//            cleanDirectory(args[0]);
-        }
+        MainWindow mainWindow = new MainWindow(windowTitle);
     }
     private static void cleanDirectory(String directory){
         try {
