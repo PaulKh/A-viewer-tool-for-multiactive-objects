@@ -8,11 +8,12 @@ import java.util.prefs.Preferences;
 public class PreferencesHelper {
     private static final String defaultDirectoryKey = "defaultDirectoryKey";
 
-    public static String getPathToDirectory(Class senderClass){
+    public static String getPathToDirectory(Class senderClass) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         return prefs.get(defaultDirectoryKey, null);
     }
-    public static void setPathToDirectory(Class senderClass, String value){
+
+    public static void setPathToDirectory(Class senderClass, String value) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         prefs.put(defaultDirectoryKey, value);
     }

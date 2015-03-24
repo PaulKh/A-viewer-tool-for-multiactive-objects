@@ -5,7 +5,6 @@ import model.ActiveObjectThread;
 import utils.SizeHelper;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,13 +17,14 @@ public class ActiveObjectViewController {
     private JPanel aoPanel;
     private JPanel threadsContainer;
     private List<ThreadViewController> threadViewControllers = new ArrayList<>();
+
     public ActiveObjectViewController(ActiveObject activeObject) {
         this.activeObject = activeObject;
         activeObjectId.setText(activeObject.getIdentifier());
-        for (ActiveObjectThread activeObjectThread:activeObject.getThreads()){
+        for (ActiveObjectThread activeObjectThread : activeObject.getThreads()) {
             ThreadViewController controller = new ThreadViewController(activeObjectThread);
             threadViewControllers.add(controller);
-            threadsContainer.setSize(3000,100);
+            threadsContainer.setSize(3000, 100);
 //            GridBagConstraints gbc = new GridBagConstraints();
 //            gbc.gridwidth = GridBagConstraints.REMAINDER;
 //            gbc.weightx = 1;
@@ -32,11 +32,13 @@ public class ActiveObjectViewController {
 //            threadsContainer.add(controller.getRootPanel(), gbc);
         }
     }
-    public JPanel getPanel(){
+
+    public JPanel getPanel() {
         return aoPanel;
     }
-    public void update(SizeHelper sizeHelper){
-        for (ThreadViewController threadViewController:threadViewControllers){
+
+    public void update(SizeHelper sizeHelper) {
+        for (ThreadViewController threadViewController : threadViewControllers) {
             threadViewController.drawThread(sizeHelper);
         }
     }

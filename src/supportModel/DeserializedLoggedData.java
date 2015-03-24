@@ -6,7 +6,7 @@ import enums.TypeOfRequest;
  * Created by pkhvoros on 3/16/15.
  */
 public class DeserializedLoggedData {
-    private static int idCounter=1;
+    private static int idCounter = 1;
     private TypeOfRequest typeOfRequest;
     private String activeObjectIdentifier;
     private int threadId;
@@ -64,7 +64,7 @@ public class DeserializedLoggedData {
         return sequenceNumber;
     }
 
-    public void parseRunnableRequest(String line){
+    public void parseRunnableRequest(String line) {
         String delims = "[,]";
         String[] equations = line.split(delims);
         delims = "[=]";
@@ -75,6 +75,7 @@ public class DeserializedLoggedData {
         leftAndRightSide = equations[2].split(delims);
         this.sequenceNumber = Long.valueOf(leftAndRightSide[leftAndRightSide.length - 1]);
     }
+
     public String generateIdentifier(String identifier) {
         String delims = "[.]";
         String[] temp = identifier.split(delims);

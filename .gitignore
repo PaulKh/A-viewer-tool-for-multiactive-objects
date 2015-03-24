@@ -5,6 +5,7 @@
 # generated files
 gen/
 out/
+logs/
 # Local configuration file (sdk path, etc)
 local.properties
 # Eclipse project files

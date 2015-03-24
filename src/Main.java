@@ -10,10 +10,12 @@ import java.io.IOException;
 
 public class Main {
     private static final String windowTitle = "Viewer tool for ProActive";
-    public static void main(String[] args){
+
+    public static void main(String[] args) {
         MainWindow mainWindow = new MainWindow(windowTitle);
     }
-    private static void cleanDirectory(String directory){
+
+    private static void cleanDirectory(String directory) {
         try {
             FileUtils.cleanDirectory(new File(directory));
         } catch (IOException e) {

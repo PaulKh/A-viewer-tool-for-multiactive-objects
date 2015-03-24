@@ -19,10 +19,12 @@ public class ThreadViewController {
         this.activeObjectThread = activeObjectThread;
 
     }
-    public JPanel getRootPanel(){
+
+    public JPanel getRootPanel() {
         return threadContainer;
     }
-    public void drawThread(SizeHelper sizeHelper){
+
+    public void drawThread(SizeHelper sizeHelper) {
         this.threadId.setText("Thread id = " + activeObjectThread.getThreadId());
         threadContainer.setMinimumSize(new Dimension(2000, 50));
         return;

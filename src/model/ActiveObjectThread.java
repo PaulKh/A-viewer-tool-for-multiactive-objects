@@ -17,7 +17,8 @@ public class ActiveObjectThread {
     public int getThreadId() {
         return threadId;
     }
-//    public ThreadEvent addThreadEvent(int id){
+
+    //    public ThreadEvent addThreadEvent(int id){
 //        for (ThreadEvent event:events){
 //            if (event.getId() == id)
 //                return event;
@@ -26,17 +27,20 @@ public class ActiveObjectThread {
 //        events.add(event);
 //        return event;
 //    }
-    public void addThreadEvent(ThreadEvent event){
+    public void addThreadEvent(ThreadEvent event) {
         events.add(event);
     }
-    public void updateThreadEvent(ThreadEvent event){
-        if (events.contains(event)){
+
+    public void updateThreadEvent(ThreadEvent event) {
+        if (events.contains(event)) {
             events.set(events.indexOf(event), event);
+        } else {
+            return;
         }
     }
 
-    public ThreadEvent getThreadEvent(long id){
-        for (ThreadEvent event:events)
+    public ThreadEvent getThreadEvent(long id) {
+        for (ThreadEvent event : events)
             if (event.getId() == id)
                 return event;
         return null;
@@ -45,4 +49,5 @@ public class ActiveObjectThread {
     public List<ThreadEvent> getEvents() {
         return events;
     }
+
 }

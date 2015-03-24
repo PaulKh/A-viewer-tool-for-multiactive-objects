@@ -4,6 +4,9 @@ package utils;
  * Created by pkhvoros on 3/19/15.
  */
 public class SizeHelper {
+    public static int activeObjectTitleHeight = 100;
+    public static int activeObjectTitleWidth = 100;
+    public static int threadTitleWidth = 120;
     public static int threadHeight = 30;
     private static long minimumTime;
     private static long maximumTime;
@@ -14,12 +17,12 @@ public class SizeHelper {
         this.minimumTime = minimumTime;
         this.maximumTime = maximumTime;
         this.scale = scale;
-        length = (int)(maximumTime - minimumTime)*scale/1000;
+        length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
 
     public SizeHelper(int scale) {
         this.scale = scale;
-        length = (int)(maximumTime - minimumTime)*scale/1000;
+        length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
 
     public long getMinimumTime() {
@@ -36,5 +39,10 @@ public class SizeHelper {
 
     public int getLength() {
         return length;
+    }
+
+    public int convertTimeToLength(long timeInMilliseconds) {
+        long tempTime = timeInMilliseconds - minimumTime;
+        return (int) ((length * tempTime) / (maximumTime - minimumTime));
     }
 }

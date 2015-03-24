@@ -8,7 +8,7 @@ import java.awt.*;
 /**
  * Created by pkhvoros on 3/20/15.
  */
-public class ThreadTitlePanel extends JPanel{
+public class ThreadTitlePanel extends JPanel {
     private String title;
 
     public ThreadTitlePanel(String title) {
@@ -28,7 +28,7 @@ public class ThreadTitlePanel extends JPanel{
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(120, SizeHelper.threadHeight);
+        return new Dimension(SizeHelper.threadTitleWidth, SizeHelper.threadHeight);
     }
 
 //    @Override

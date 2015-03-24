@@ -1,12 +1,14 @@
 package views;
 
+import utils.SizeHelper;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * Created by pkhvoros on 3/20/15.
  */
-public class ActiveObjectTitlePanel extends JPanel{
+public class ActiveObjectTitlePanel extends JPanel {
     private String title;
 
     public ActiveObjectTitlePanel(String title) {
@@ -26,7 +28,7 @@ public class ActiveObjectTitlePanel extends JPanel{
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(100, 100);
+        return new Dimension(SizeHelper.activeObjectTitleWidth, SizeHelper.activeObjectTitleHeight);
     }
 
 //    @Override
