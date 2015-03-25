@@ -50,7 +50,7 @@ public class ScalePanel extends JPanel {
                 continue;
             }
             JLabel label = new JLabel(dateFormat.format(tuplePositionTime.getTime()));
-            lastLabelPosition = SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() + (labelLength / 2);
+            lastLabelPosition = SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
             label.setBounds(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
             add(label);
         }

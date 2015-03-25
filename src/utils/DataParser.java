@@ -106,21 +106,27 @@ public class DataParser {
 
     public static ActiveObject getActiveObjectFromDeserializedData(List<DeserializedLoggedData> dataList) {
         ActiveObject activeObject = new ActiveObject();
+        List<StartedButNotFinishedEvent> startedButNotFinishedEvents = new ArrayList<>();
         for (DeserializedLoggedData deserializedLoggedData : dataList) {
             activeObject.setIdentifier(deserializedLoggedData.getActiveObjectIdentifier());
             ActiveObjectThread thread = activeObject.addThreadWithId(deserializedLoggedData.getThreadId());
+            ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber());
             if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStarted) {
-                ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber());
                 event.setStartTime(deserializedLoggedData.getTimeStamp());
                 event.setMethodName(deserializedLoggedData.getMethodName());
                 if (oldAndNewAOIdsKeyValuePairs.containsKey(deserializedLoggedData.getSender()))
                     event.setSenderActiveObjectId(oldAndNewAOIdsKeyValuePairs.get(deserializedLoggedData.getSender()));
-                thread.addThreadEvent(event);
-
+                startedButNotFinishedEvents.add(new StartedButNotFinishedEvent(thread, event));
             } else if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStopped) {
-                ThreadEvent event = thread.getThreadEvent(deserializedLoggedData.getSequenceNumber());
-                event.setFinishTime(deserializedLoggedData.getTimeStamp());
-                thread.updateThreadEvent(event);
+                for (StartedButNotFinishedEvent tempEvent:startedButNotFinishedEvents){
+                    if(tempEvent.getActiveObjectThread().getThreadId() == thread.getThreadId()
+                            && tempEvent.getEvent().getSequenceNumber() == event.getSequenceNumber()){
+                        tempEvent.getEvent().setFinishTime(deserializedLoggedData.getTimeStamp());
+                        thread.addThreadEvent(tempEvent.getEvent());
+                        startedButNotFinishedEvents.remove(tempEvent);
+                        break;
+                    }
+                }
             }
         }
 
@@ -129,6 +135,27 @@ public class DataParser {
 //        }
 //        System.out.println();
         return activeObject;
+    }
+    private static class StartedButNotFinishedEvent{
+        private ActiveObjectThread activeObjectThread;
+        private ThreadEvent event;
+
+        public StartedButNotFinishedEvent(ActiveObjectThread activeObjectThread, ThreadEvent event) {
+            this.activeObjectThread = activeObjectThread;
+            this.event = event;
+        }
+
+        public ActiveObjectThread getActiveObjectThread() {
+            return activeObjectThread;
+        }
+
+        public ThreadEvent getEvent() {
+            return event;
+        }
+
+        public void setEvent(ThreadEvent event) {
+            this.event = event;
+        }
     }
 }
 

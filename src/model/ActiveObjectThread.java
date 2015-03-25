@@ -20,7 +20,7 @@ public class ActiveObjectThread {
 
     //    public ThreadEvent addThreadEvent(int id){
 //        for (ThreadEvent event:events){
-//            if (event.getId() == id)
+//            if (event.getSequenceNumber() == id)
 //                return event;
 //        }
 //        ThreadEvent event = new ThreadEvent(id);
@@ -41,7 +41,7 @@ public class ActiveObjectThread {
 
     public ThreadEvent getThreadEvent(long id) {
         for (ThreadEvent event : events)
-            if (event.getId() == id)
+            if (event.getSequenceNumber() == id)
                 return event;
         return null;
     }

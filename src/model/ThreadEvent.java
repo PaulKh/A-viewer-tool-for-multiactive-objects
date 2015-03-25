@@ -4,14 +4,15 @@ package model;
  * Created by pkhvoros on 3/13/15.
  */
 public class ThreadEvent {
-    private long id;
+    //WARNING: sequence number might be not unique in thread
+    private long sequenceNumber;
     private long startTime;
     private long finishTime;
     private String methodName;
     private String senderActiveObjectId;
 
     public ThreadEvent(long id) {
-        this.id = id;
+        this.sequenceNumber = id;
     }
 
     public long getStartTime() {
@@ -46,7 +47,7 @@ public class ThreadEvent {
         this.senderActiveObjectId = senderActiveObjectId;
     }
 
-    public long getId() {
-        return id;
+    public long getSequenceNumber() {
+        return sequenceNumber;
     }
 }
