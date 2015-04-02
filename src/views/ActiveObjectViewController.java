@@ -25,11 +25,6 @@ public class ActiveObjectViewController {
             ThreadViewController controller = new ThreadViewController(activeObjectThread);
             threadViewControllers.add(controller);
             threadsContainer.setSize(3000, 100);
-//            GridBagConstraints gbc = new GridBagConstraints();
-//            gbc.gridwidth = GridBagConstraints.REMAINDER;
-//            gbc.weightx = 1;
-//            gbc.weighty = 1;
-//            threadsContainer.add(controller.getRootPanel(), gbc);
         }
     }
 

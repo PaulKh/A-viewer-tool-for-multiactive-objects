@@ -36,9 +36,9 @@ public class ScalePanel extends JPanel {
         }
         horizontalPoints.add(new TuplePositionTime(sizeHelper.getLength(), sizeHelper.getMaximumTime()));
 
-        for (TuplePositionTime tuplePositionTime : horizontalPoints) {
-            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
-        }
+//        for (TuplePositionTime tuplePositionTime : horizontalPoints) {
+//            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
+//        }
         g.fillRect(SizeHelper.threadTitleWidth, 8, sizeHelper.getLength(), 2);
         Date startDate = new Date(sizeHelper.getMinimumTime());
         g.getFontMetrics().stringWidth(dateFormat.format(startDate));
@@ -52,6 +52,7 @@ public class ScalePanel extends JPanel {
             JLabel label = new JLabel(dateFormat.format(tuplePositionTime.getTime()));
             lastLabelPosition = SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
             label.setBounds(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
+            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
             add(label);
         }
     }

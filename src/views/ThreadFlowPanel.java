@@ -24,7 +24,7 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
         ToolTipManager.sharedInstance().setInitialDelay(0);
         for (ThreadEvent threadEvent : activeObjectThread.getEvents())
             rectangles.add(new RectangleWithThreadEvent(threadEvent));
-        this.setBackground(Color.CYAN);
+        this.setBackground(Color.WHITE);
         this.addMouseMotionListener(this);
         updateSize(sizeHelper);
     }
@@ -40,8 +40,9 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
             if (length == 0)
                 length = 1;
             event.setRectangle(new Rectangle(xPos, 0, length, SizeHelper.threadHeight));
-            if (finishTime < 0)
-                System.out.println("thread id = " + activeObjectThread.getThreadId() + " length = " + length + " finishTime = " + finishTime);
+            if (finishTime <= 0)
+                event.setRectangle(new Rectangle(xPos, 0, sizeHelper.getLength() - xPos, SizeHelper.threadHeight));
+//                System.out.println("thread id = " + activeObjectThread.getThreadId() + " length = " + length + " finishTime = " + finishTime);
         }
         setSize(sizeHelper.getLength(), SizeHelper.threadHeight);
     }
@@ -54,9 +55,22 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(new Color(255, 0, 0));
+        int counter = 0;
         for (RectangleWithThreadEvent rect : rectangles) {
+            counter++;
+            if (rect.getThreadEvent().getFinishTime() <= 0) {
+                g.setColor(new Color(255, 0, 0));
+            }
+            else if (counter % 2 == 0){
+                g.setColor(new Color(128, 205, 255));
+            }
+            else{
+                g.setColor(new Color(255, 248, 57));
+            }
             g.fillRect(rect.getRectangle().x, rect.getRectangle().y, rect.getRectangle().width, rect.getRectangle().height);
+//            else{
+//               g.fillRect(rect.getRectangle().x, rect.getRectangle().y, sizeHelper.getLength() - rect.getRectangle().x, rect.getRectangle().height);
+//            }
         }
     }
 
@@ -69,8 +83,13 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
         int mx = e.getX();
         int my = e.getY();
         for (RectangleWithThreadEvent rect : rectangles) {
+
             if (rect.getRectangle().contains(mx, my)) {
-                setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+                if (rect.getThreadEvent().getFinishTime() <= 0){
+                    setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+                }
+                else
+                    setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
                 return;
             }
         }

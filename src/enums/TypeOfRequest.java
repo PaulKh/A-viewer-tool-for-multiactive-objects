@@ -6,6 +6,8 @@ package enums;
 public enum TypeOfRequest {
     None(0),
     ServeStarted(4),
+    RequestDelivered(0),
+    RequestSent(0),
     ServeStopped(4);
     private int numberOfLinesInLog;
 

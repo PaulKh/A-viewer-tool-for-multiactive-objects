@@ -1,14 +1,18 @@
 package views;
 
-import exceptions.WrongLogFileFormat;
+import enums.IssueType;
+import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
+import supportModel.ErrorEntity;
+import supportModel.ParsedData;
 import utils.DataParser;
 import utils.PreferencesHelper;
 import utils.SizeHelper;
 
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.nio.file.Files;
@@ -49,9 +53,11 @@ public class MainWindow extends JFrame {
     ActionListener parseLogsAndBuildTree = e -> {
         try {
             scrollPaneRoot.removeAll();
-            activeObjects = DataParser.parseData(directory);
+            ParsedData parsedData = DataParser.parseData(directory);
+            activeObjects = parsedData.getActiveObjects();
+            showErrorMessage(parsedData.getErrorEntities());
             buildTree();
-        } catch (WrongLogFileFormat wff) {
+        } catch (WrongLogFileFormatException wff) {
             JOptionPane.showMessageDialog(null, wff.getMessage());
         }
     };
@@ -143,6 +149,7 @@ public class MainWindow extends JFrame {
             constraints.fill = GridBagConstraints.NONE;
             constraints.gridwidth = 1;
             constraints.gridheight = activeObject.getThreads().size() * 2 + 1;
+            constraints.fill = GridBagConstraints.VERTICAL;
             gridBagLayout.setConstraints(titlePanel, constraints);
             scrollPaneRoot.add(titlePanel);
 
@@ -209,5 +216,55 @@ public class MainWindow extends JFrame {
         scrollPaneRoot.add(emptyRow2);
         revalidate();
         repaint();
+    }
+    private void showErrorMessage(List<ErrorEntity> errorEntities){
+        if (errorEntities.size() == 0){
+            return;
+        }
+//        String message = "";
+//        for (ErrorEntity errorEntity:errorEntities){
+//            message = message + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
+//        }
+        JDialog dialog = new JDialog(this);
+        dialog.setTitle("Issue log");
+        dialog.setLocationByPlatform(true);
+        StyleContext sc = new StyleContext();
+        final DefaultStyledDocument doc = new DefaultStyledDocument(sc);
+
+        final Style errorStyle = sc.addStyle("ErrorStyle", null);
+        errorStyle.addAttribute(StyleConstants.Foreground, Color.red);
+
+        JTextPane pane = new JTextPane(doc);
+        try {
+            for (ErrorEntity errorEntity:errorEntities){
+                if (errorEntity.getErrorType().getIssueType() == IssueType.Error ||
+                        errorEntity.getErrorType().getIssueType() == IssueType.FatalError) {
+                    String message = "ERROR: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
+                    doc.insertString(doc.getLength(), message, null);
+                    doc.setParagraphAttributes(doc.getLength() - message.length(), 1, errorStyle, false);
+                }
+            }
+            for (ErrorEntity errorEntity:errorEntities){
+                if (errorEntity.getErrorType().getIssueType() == IssueType.Warning) {
+                    String message = "WARNING: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
+                    doc.insertString(doc.getLength(), message, null);
+                    doc.setParagraphAttributes(doc.getLength() - message.length(), 1, errorStyle, false);
+                }
+            }
+            for (ErrorEntity errorEntity:errorEntities){
+                if (errorEntity.getErrorType().getIssueType() == IssueType.Info) {
+                    String message = "INFO: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
+                    doc.insertString(doc.getLength(), message, null);
+                }
+            }
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+        pane.select(0,0);
+        pane.setEditable(false);
+        dialog.setPreferredSize(new Dimension(400, 300));
+        dialog.add(new JScrollPane(pane));
+        dialog.pack();
+        dialog.setVisible(true);
     }
 }

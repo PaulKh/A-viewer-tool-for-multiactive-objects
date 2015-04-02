@@ -21,6 +21,7 @@ public class ThreadTitlePanel extends JPanel {
         this.setBackground(new Color(100, 250, 150));
         JTextArea label = new JTextArea("Thread Id:" + title);
         label.setLineWrap(true);
+        label.setBackground(null);
         label.setWrapStyleWord(true);
         gridBagLayout.setConstraints(label, constraints);
         this.add(label);

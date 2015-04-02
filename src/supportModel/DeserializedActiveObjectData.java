@@ -1,11 +1,12 @@
 package supportModel;
 
 import enums.TypeOfRequest;
+import exceptions.WreckedFileException;
 
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class DeserializedLoggedData {
+public class DeserializedActiveObjectData {
     private static int idCounter = 1;
     private TypeOfRequest typeOfRequest;
     private String activeObjectIdentifier;
@@ -15,7 +16,7 @@ public class DeserializedLoggedData {
     private String sender;
     private long sequenceNumber;
 
-    public DeserializedLoggedData(TypeOfRequest typeOfRequest) {
+    public DeserializedActiveObjectData(TypeOfRequest typeOfRequest) {
         this.typeOfRequest = typeOfRequest;
     }
 
@@ -64,24 +65,20 @@ public class DeserializedLoggedData {
         return sequenceNumber;
     }
 
-    public void parseRunnableRequest(String line) {
-        String delims = "[,]";
-        String[] equations = line.split(delims);
-        delims = "[=]";
-        String[] leftAndRightSide = equations[0].split(delims);
-        this.methodName = leftAndRightSide[leftAndRightSide.length - 1];
-        leftAndRightSide = equations[1].split(delims);
-        this.sender = leftAndRightSide[leftAndRightSide.length - 1];
-        leftAndRightSide = equations[2].split(delims);
-        this.sequenceNumber = Long.valueOf(leftAndRightSide[leftAndRightSide.length - 1]);
-    }
-
-    public String generateIdentifier(String identifier) {
-        String delims = "[.]";
-        String[] temp = identifier.split(delims);
-        delims = "[_]";
-        this.activeObjectIdentifier = temp[temp.length - 1].split(delims)[0] + idCounter;
-        idCounter++;
-        return this.activeObjectIdentifier;
+    public void parseRunnableRequest(String line) throws WreckedFileException{
+        try {
+            String delims = "[,]";
+            String[] equations = line.split(delims);
+            delims = "[=]";
+            String[] leftAndRightSide = equations[0].split(delims);
+            this.methodName = leftAndRightSide[leftAndRightSide.length - 1];
+            leftAndRightSide = equations[1].split(delims);
+            this.sender = leftAndRightSide[leftAndRightSide.length - 1];
+            leftAndRightSide = equations[2].split(delims);
+            this.sequenceNumber = Long.valueOf(leftAndRightSide[leftAndRightSide.length - 1]);
+        }
+        catch (ArrayIndexOutOfBoundsException exc){
+            throw new WreckedFileException();
+        }
     }
 }

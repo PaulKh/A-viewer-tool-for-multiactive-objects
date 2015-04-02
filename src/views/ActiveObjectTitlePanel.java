@@ -18,17 +18,17 @@ public class ActiveObjectTitlePanel extends JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.weightx = constraints.weighty = 1.0;
 
-        this.setBackground(new Color(100, 25, 150));
         JTextArea label = new JTextArea("Active Object:" + title);
         label.setLineWrap(true);
         label.setWrapStyleWord(true);
+        label.setBackground(null);
         gridBagLayout.setConstraints(label, constraints);
         this.add(label);
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(SizeHelper.activeObjectTitleWidth, SizeHelper.activeObjectTitleHeight);
+        return new Dimension(SizeHelper.activeObjectTitleWidth, 0);
     }
 
 //    @Override
