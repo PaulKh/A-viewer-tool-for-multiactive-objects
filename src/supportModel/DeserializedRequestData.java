@@ -10,6 +10,7 @@ public class DeserializedRequestData {
     private String senderIdentifier;
     private String receiverIdentifier;
     private String methodName;
+    private int threadId;
     private long sequenceNumber;
     private long timeStamp;
 
@@ -59,5 +60,17 @@ public class DeserializedRequestData {
 
     public void setTimeStamp(long timeStamp) {
         this.timeStamp = timeStamp;
+    }
+
+    public int getThreadId() {
+        return threadId;
+    }
+
+    public void setThreadId(int threadId) {
+        this.threadId = threadId;
+    }
+
+    public String getId(){
+        return senderIdentifier + sequenceNumber;
     }
 }

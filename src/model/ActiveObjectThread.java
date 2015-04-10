@@ -9,9 +9,11 @@ import java.util.List;
 public class ActiveObjectThread {
     private List<ThreadEvent> events = new ArrayList<>();
     private int threadId;
+    private ActiveObject activeObject;
 
-    public ActiveObjectThread(int threadId) {
+    public ActiveObjectThread(int threadId, ActiveObject activeObject) {
         this.threadId = threadId;
+        this.activeObject = activeObject;
     }
 
     public int getThreadId() {
@@ -50,4 +52,7 @@ public class ActiveObjectThread {
         return events;
     }
 
+    public ActiveObject getActiveObject() {
+        return activeObject;
+    }
 }

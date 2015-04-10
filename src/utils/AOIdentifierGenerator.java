@@ -3,7 +3,7 @@ package utils;
 /**
  * Created by pkhvoros on 3/31/15.
  */
-public class DataParserHelper {
+public class AOIdentifierGenerator {
     private static int activeObjectIdentifierCounter = 0;
     public static String generateUniqueAOIdentifier(String identifier) {
         String delims = "[.]";

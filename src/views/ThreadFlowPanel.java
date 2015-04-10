@@ -1,5 +1,6 @@
 package views;
 
+import callbacks.ThreadEventClickedCallback;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import utils.SizeHelper;
@@ -7,6 +8,7 @@ import utils.SizeHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,23 +16,24 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/19/15.
  */
-public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
+public class ThreadFlowPanel extends JPanel implements MouseMotionListener, MouseListener {
     private List<RectangleWithThreadEvent> rectangles = new ArrayList<>();
-    private SizeHelper sizeHelper;
     private ActiveObjectThread activeObjectThread;
+    private ThreadEventClickedCallback callback;
 
-    public ThreadFlowPanel(ActiveObjectThread activeObjectThread, SizeHelper sizeHelper) {
+    public ThreadFlowPanel(ActiveObjectThread activeObjectThread) {
         this.activeObjectThread = activeObjectThread;
         ToolTipManager.sharedInstance().setInitialDelay(0);
         for (ThreadEvent threadEvent : activeObjectThread.getEvents())
             rectangles.add(new RectangleWithThreadEvent(threadEvent));
         this.setBackground(Color.WHITE);
         this.addMouseMotionListener(this);
-        updateSize(sizeHelper);
+        this.addMouseListener(this);
+        updateSize();
     }
 
-    public void updateSize(SizeHelper sizeHelper) {
-        this.sizeHelper = sizeHelper;
+    public void updateSize() {
+        SizeHelper sizeHelper = SizeHelper.instance();
         long totalTime = sizeHelper.getMaximumTime() - sizeHelper.getMinimumTime();
         for (RectangleWithThreadEvent event : rectangles) {
             long startTime = event.getThreadEvent().getStartTime() - sizeHelper.getMinimumTime();
@@ -49,7 +52,7 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(sizeHelper.getLength(), SizeHelper.threadHeight);
+        return new Dimension(SizeHelper.instance().getLength(), SizeHelper.threadHeight);
     }
 
     @Override
@@ -80,20 +83,55 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        int mx = e.getX();
-        int my = e.getY();
-        for (RectangleWithThreadEvent rect : rectangles) {
-
-            if (rect.getRectangle().contains(mx, my)) {
-                if (rect.getThreadEvent().getFinishTime() <= 0){
-                    setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
-                }
-                else
-                    setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
-                return;
+        RectangleWithThreadEvent rect = getRectangleContainingPoint(e);
+        if (rect != null){
+            if (rect.getThreadEvent().getFinishTime() <= 0){
+                setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+            }
+            else {
+                float duration = (float) (((rect.getThreadEvent().getFinishTime() - rect.getThreadEvent().getStartTime()) / 10) / 100.0);
+                setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "<br>Duration:" + duration + " sec</html>");
             }
         }
-        setToolTipText(null);
+        else
+            setToolTipText(null);
+    }
+    private RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent){
+        int mx = mouseEvent.getX();
+        int my = mouseEvent.getY();
+        for (RectangleWithThreadEvent rect : rectangles) {
+            if (rect.getRectangle().contains(mx, my)) {
+                return rect;
+            }
+        }
+        return null;
+    }
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        RectangleWithThreadEvent rect = getRectangleContainingPoint(e);
+        if (rect != null && callback != null){
+            callback.threadEventClicked(rect.threadEvent);
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
     }
 
     private class RectangleWithThreadEvent {
@@ -115,5 +153,17 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener {
         public ThreadEvent getThreadEvent() {
             return threadEvent;
         }
+    }
+
+    public ThreadEventClickedCallback getCallback() {
+        return callback;
+    }
+
+    public void setCallback(ThreadEventClickedCallback callback) {
+        this.callback = callback;
+    }
+
+    public ActiveObjectThread getActiveObjectThread() {
+        return activeObjectThread;
     }
 }

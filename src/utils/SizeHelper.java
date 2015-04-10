@@ -4,23 +4,31 @@ package utils;
  * Created by pkhvoros on 3/19/15.
  */
 public class SizeHelper {
+    private static SizeHelper sizeHelper;
     public static int activeObjectTitleHeight = 100;
     public static int activeObjectTitleWidth = 100;
     public static int threadTitleWidth = 120;
     public static int threadHeight = 30;
-    private static long minimumTime;
-    private static long maximumTime;
+    private long minimumTime;
+    private long maximumTime;
     private int scale;
     private int length;
 
-    public SizeHelper(long minimumTime, long maximumTime, int scale) {
+    public static SizeHelper instance(){
+        if (sizeHelper == null){
+            sizeHelper = new SizeHelper();
+        }
+        return sizeHelper;
+    }
+
+    public void init(long minimumTime, long maximumTime, int scale) {
         this.minimumTime = minimumTime;
         this.maximumTime = maximumTime;
         this.scale = scale;
         length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
 
-    public SizeHelper(int scale) {
+    public void setScale(int scale) {
         this.scale = scale;
         length = (int) (maximumTime - minimumTime) * scale / 1000;
     }

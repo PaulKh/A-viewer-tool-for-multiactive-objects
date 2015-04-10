@@ -28,7 +28,7 @@ public class DataParser {
 
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
 
-    public static ParsedData parseData(String sourceDirectory) throws WrongLogFileFormatException {
+    public ParsedData parseData(String sourceDirectory){
         List<ActiveObject> activeObjects = new ArrayList<ActiveObject>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
@@ -63,10 +63,11 @@ public class DataParser {
         }
         ParsedData parsedData = new ParsedData();
         parsedData.setActiveObjects(activeObjects);
+        parsedData.setDeserializedRequestDataList(deserializedRequestDataList);
         parsedData.addAllErrorEntities(errorEntities);
         return parsedData;
     }
-    private static WrappedRequestWithError readRequestFile(Path path){
+    private WrappedRequestWithError readRequestFile(Path path){
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
         List<String> lines = null;
         List<ErrorEntity> errorEntities = new ArrayList<>();
@@ -78,7 +79,7 @@ public class DataParser {
                     if(line.startsWith("deliverrequest")){
                         deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestDelivered));
                     }
-                    else if (line.startsWith("requestsent")){
+                    else if (line.startsWith("beforerequestsent")){
                         deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestSent));
                     }
                 } catch (WreckedFileException e) {
@@ -95,7 +96,7 @@ public class DataParser {
         return requestWithError;
 
     }
-    private static WrappedActiveObjectWithError readActiveObjectFile(Path path) throws WrongLogFileFormatException{
+    private WrappedActiveObjectWithError readActiveObjectFile(Path path) throws WrongLogFileFormatException{
         List<DeserializedActiveObjectData> deserializedLoggedDataList = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         DeserializedActiveObjectData currentRequest = null;
@@ -166,13 +167,13 @@ public class DataParser {
         errorEntity.setMessage("File name=" + path);
         return errorEntity;
     }
-    public static WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedActiveObjectData> dataList) {
+    public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedActiveObjectData> dataList) {
         ActiveObject activeObject = new ActiveObject();
         List<StartedButNotFinishedEvent> startedButNotFinishedEvents = new ArrayList<>();
         for (DeserializedActiveObjectData deserializedLoggedData : dataList) {
             activeObject.setIdentifier(deserializedLoggedData.getActiveObjectIdentifier());
             ActiveObjectThread thread = activeObject.addThreadWithId(deserializedLoggedData.getThreadId());
-            ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber());
+            ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber(), thread);
             if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStarted) {
                 event.setStartTime(deserializedLoggedData.getTimeStamp());
                 event.setMethodName(deserializedLoggedData.getMethodName());
@@ -201,7 +202,7 @@ public class DataParser {
         return wrappedActiveObjectWithError;
     }
 
-    private static class StartedButNotFinishedEvent{
+    private class StartedButNotFinishedEvent{
         private ActiveObjectThread activeObjectThread;
         private ThreadEvent event;
 
@@ -223,7 +224,7 @@ public class DataParser {
         }
     }
 
-    private static class WrappedActiveObjectWithError{
+    private class WrappedActiveObjectWithError{
         private ActiveObject activeObject;
         List<ErrorEntity> errorEntities = new ArrayList<>();
 
@@ -244,7 +245,7 @@ public class DataParser {
             return activeObject;
         }
     }
-    private static class WrappedRequestWithError{
+    private class WrappedRequestWithError{
         private List<DeserializedRequestData> requestData = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
 
@@ -270,21 +271,22 @@ public class DataParser {
             this.errorEntities = errorEntities;
         }
     }
-    private static DeserializedRequestData parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException{
+    private DeserializedRequestData parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException{
         DeserializedRequestData requestData = new DeserializedRequestData(typeOfRequest);
         String delims = "[ ]";
         String[] properties = line.split(delims);
         requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[1]));
-        requestData.setMethodName(properties[2]);
-        requestData.setSequenceNumber(Long.valueOf(properties[3]));
-        requestData.setTimeStamp(Long.valueOf(properties[4]));
-        requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[5]));
+        requestData.setThreadId(Integer.parseInt(properties[2]));
+        requestData.setMethodName(properties[3]);
+        requestData.setSequenceNumber(Long.valueOf(properties[4]));
+        requestData.setTimeStamp(Long.valueOf(properties[5]));
+        requestData.setSenderIdentifier(locateOrGenerateIdentifierFromKey(properties[6]));
         return requestData;
     }
-    private static String locateOrGenerateIdentifierFromKey(String key){
+    private String locateOrGenerateIdentifierFromKey(String key){
         String newIdentifier;
         if (!oldAndNewAOIdsKeyValuePairs.containsKey(key)) {
-            newIdentifier = DataParserHelper.generateUniqueAOIdentifier(key);
+            newIdentifier = AOIdentifierGenerator.generateUniqueAOIdentifier(key);
             oldAndNewAOIdsKeyValuePairs.put(key, newIdentifier);
         } else {
             newIdentifier = oldAndNewAOIdsKeyValuePairs.get(key);

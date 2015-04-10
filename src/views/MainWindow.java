@@ -1,12 +1,15 @@
 package views;
 
+import callbacks.ThreadEventClickedCallback;
 import enums.IssueType;
 import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
+import supportModel.Arrow;
 import supportModel.ErrorEntity;
 import supportModel.ParsedData;
+import utils.DataHelper;
 import utils.DataParser;
 import utils.PreferencesHelper;
 import utils.SizeHelper;
@@ -24,7 +27,8 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements ThreadEventClickedCallback{
+    private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
     ActionListener openLogFiles = e -> {
@@ -42,27 +46,24 @@ public class MainWindow extends JFrame {
             directory = fc.getSelectedFile().toString();
         }
     };
-    private SizeHelper sizeHelper;
+
     //views
     private JButton selectLogFilesButton;
     private JPanel rootPanel;
     private JButton parseButton;
     private JPanel activeObjectsRoot;
     private JScrollPane scrollPane;
-    private JPanel scrollPaneRoot;
+    private ScrollRootPanel scrollPaneRoot;
     ActionListener parseLogsAndBuildTree = e -> {
-        try {
-            scrollPaneRoot.removeAll();
-            ParsedData parsedData = DataParser.parseData(directory);
-            activeObjects = parsedData.getActiveObjects();
-            showErrorMessage(parsedData.getErrorEntities());
-            buildTree();
-        } catch (WrongLogFileFormatException wff) {
-            JOptionPane.showMessageDialog(null, wff.getMessage());
-        }
+        dataHelper = new DataHelper(directory);
+        activeObjects = dataHelper.getActiveObjects();
+
+        showErrorMessage(dataHelper.getErrorEntities());
+        buildTree();
     };
     private JSlider scaleSlider;
     private JLabel scaleLabel;
+    private JPanel scrollContainer;
     private ScalePanel scalePanel;
     private List<ThreadFlowPanel> flowPanels = new ArrayList<>();
 
@@ -82,14 +83,14 @@ public class MainWindow extends JFrame {
         scaleSlider.setValue(500);
         scaleSlider.addChangeListener(e -> {
             scaleLabel.setText(scaleSlider.getValue() + " pixels/seconds");
-
+            SizeHelper.instance().setScale(scaleSlider.getValue());
             for (ThreadFlowPanel flowPanel : flowPanels) {
-                sizeHelper = new SizeHelper(scaleSlider.getValue());
-                flowPanel.updateSize(sizeHelper);
+                flowPanel.updateSize();
             }
             if (scalePanel != null) {
-                scalePanel.updateView(sizeHelper);
+                scalePanel.updateView();
             }
+            scrollPaneRoot.repaint();
             revalidate();
             repaint();
         });
@@ -132,15 +133,22 @@ public class MainWindow extends JFrame {
                 }
             }
         }
-        sizeHelper = new SizeHelper(minimumTime, maximumTime, scaleSlider.getValue());
+        SizeHelper.instance().init(minimumTime, maximumTime, scaleSlider.getValue());
     }
 
     private void buildTree() {
         discoverMinimumAndMaximum();
-
         GridBagLayout gridBagLayout = new GridBagLayout();
-        scrollPaneRoot.setLayout(gridBagLayout);
         GridBagConstraints constraints;
+        if (scrollPane == null) {
+            scrollPaneRoot = new ScrollRootPanel(gridBagLayout);
+            scrollPane = new JScrollPane(scrollPaneRoot);
+            scrollContainer.add(scrollPane, BorderLayout.CENTER);
+        }
+        else {
+            scrollPaneRoot.removeAll();
+            scrollPaneRoot.setLayout(gridBagLayout);
+        }
         for (ActiveObject activeObject : activeObjects) {
 
             ActiveObjectTitlePanel titlePanel = new ActiveObjectTitlePanel(activeObject.getIdentifier());
@@ -168,8 +176,9 @@ public class MainWindow extends JFrame {
                 gridBagLayout.setConstraints(threadTitlePanel, constraints);
                 scrollPaneRoot.add(threadTitlePanel);
 
-                ThreadFlowPanel flowPanel = new ThreadFlowPanel(thread, sizeHelper);
+                ThreadFlowPanel flowPanel = new ThreadFlowPanel(thread);
                 flowPanels.add(flowPanel);
+                flowPanel.setCallback(this);
                 constraints = new GridBagConstraints();
                 constraints.weightx = 0.0;
                 constraints.gridwidth = GridBagConstraints.NONE;
@@ -201,7 +210,7 @@ public class MainWindow extends JFrame {
 //        gridBagLayout.setConstraints(emptyRow1, constraints);
 //        scrollPaneRoot.add(emptyRow1);
 
-        scalePanel = new ScalePanel(sizeHelper);
+        scalePanel = new ScalePanel();
         constraints = new GridBagConstraints();
         constraints.weightx = 0.0;
         constraints.gridwidth = GridBagConstraints.NONE;
@@ -215,6 +224,7 @@ public class MainWindow extends JFrame {
         gridBagLayout.setConstraints(emptyRow2, constraints);
         scrollPaneRoot.add(emptyRow2);
         revalidate();
+        scrollPaneRoot.setFlowX((flowPanels.size() != 0) ? flowPanels.get(0).getX():200);
         repaint();
     }
     private void showErrorMessage(List<ErrorEntity> errorEntities){
@@ -266,5 +276,27 @@ public class MainWindow extends JFrame {
         dialog.add(new JScrollPane(pane));
         dialog.pack();
         dialog.setVisible(true);
+    }
+
+    @Override
+    public void threadEventClicked(ThreadEvent threadEvent) {
+        addArrowForThreadEvent(threadEvent);
+        List<ThreadEvent> threadEvents = dataHelper.getOutgoingThreadEvents(threadEvent);
+        for (ThreadEvent threadEvent1: threadEvents){
+            addArrowForThreadEvent(threadEvent1);
+        }
+        scrollPaneRoot.repaint();
+    }
+    private void addArrowForThreadEvent(ThreadEvent threadEvent){
+        ThreadFlowPanel sourcePanel = null, destinationPanel = null;
+        for (ThreadFlowPanel threadFlowPanel:flowPanels){
+            if (threadFlowPanel.getActiveObjectThread() == threadEvent.getThread()){
+                destinationPanel = threadFlowPanel;
+            }
+            if(threadFlowPanel.getActiveObjectThread().getThreadId() == threadEvent.getSenderThreadId()){
+                sourcePanel = threadFlowPanel;
+            }
+        }
+        scrollPaneRoot.addArrow(threadEvent, sourcePanel, destinationPanel);
     }
 }

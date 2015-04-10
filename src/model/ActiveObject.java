@@ -24,7 +24,7 @@ public class ActiveObject {
             if (thread.getThreadId() == id)
                 return thread;
         }
-        ActiveObjectThread thread = new ActiveObjectThread(id);
+        ActiveObjectThread thread = new ActiveObjectThread(id, this);
         threads.add(thread);
         return thread;
     }

@@ -8,11 +8,16 @@ public class ThreadEvent {
     private long sequenceNumber;
     private long startTime;
     private long finishTime;
+    private long derivedTime;
     private String methodName;
     private String senderActiveObjectId;
+    private long requestSentTime;
+    private int senderThreadId;
+    private ActiveObjectThread thread;
 
-    public ThreadEvent(long id) {
-        this.sequenceNumber = id;
+    public ThreadEvent(long sequenceNumber, ActiveObjectThread thread) {
+        this.sequenceNumber = sequenceNumber;
+        this.thread = thread;
     }
 
     public long getStartTime() {
@@ -49,5 +54,37 @@ public class ThreadEvent {
 
     public long getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    public long getDerivedTime() {
+        return derivedTime;
+    }
+
+    public void setDerivedTime(long derivedTime) {
+        this.derivedTime = derivedTime;
+    }
+
+    public long getRequestSentTime() {
+        return requestSentTime;
+    }
+
+    public void setRequestSentTime(long requestSentTime) {
+        this.requestSentTime = requestSentTime;
+    }
+
+    public int getSenderThreadId() {
+        return senderThreadId;
+    }
+
+    public void setSenderThreadId(int senderThreadId) {
+        this.senderThreadId = senderThreadId;
+    }
+
+    public String getId(){
+        return senderActiveObjectId + sequenceNumber;
+    }
+
+    public ActiveObjectThread getThread() {
+        return thread;
     }
 }
