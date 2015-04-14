@@ -3,6 +3,7 @@ package views;
 import callbacks.ThreadEventClickedCallback;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
+import supportModel.Arrow;
 import utils.SizeHelper;
 
 import javax.swing.*;
@@ -71,6 +72,8 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
                 g.setColor(new Color(255, 248, 57));
             }
             g.fillRect(rect.getRectangle().x, rect.getRectangle().y, rect.getRectangle().width, rect.getRectangle().height);
+            if (rect.isHighlighted)
+                drawHighlightedRectangle(g, rect.getRectangle());
 //            else{
 //               g.fillRect(rect.getRectangle().x, rect.getRectangle().y, sizeHelper.getLength() - rect.getRectangle().x, rect.getRectangle().height);
 //            }
@@ -135,6 +138,7 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
     }
 
     private class RectangleWithThreadEvent {
+        private boolean isHighlighted = false;
         private Rectangle rectangle;
         private ThreadEvent threadEvent;
 
@@ -153,6 +157,14 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
         public ThreadEvent getThreadEvent() {
             return threadEvent;
         }
+
+        public boolean isHighlighted() {
+            return isHighlighted;
+        }
+
+        public void setHighlighted(boolean isHighlighted) {
+            this.isHighlighted = isHighlighted;
+        }
     }
 
     public ThreadEventClickedCallback getCallback() {
@@ -165,5 +177,35 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
 
     public ActiveObjectThread getActiveObjectThread() {
         return activeObjectThread;
+    }
+
+    private void drawHighlightedRectangle(Graphics g, Rectangle rect){
+        g.setColor(Color.ORANGE);
+//        Graphics2D g2 = (Graphics2D) g;
+//        float thickness = 20;
+//        Stroke oldStroke = g2.getStroke();
+//        g2.setStroke(new BasicStroke(thickness));
+        int thickness = 8;
+        for (int i = 0; i < thickness; i++){
+            g.setColor(new Color(255, 143, 20, (255 * (thickness - i)) / thickness));
+            g.drawRect(rect.x + i, rect.y + i, rect.width - (i * 2), rect.height - (i * 2));
+        }
+//        g2.setStroke(oldStroke);
+
+    }
+    public void setHighlightedEvent(List<Arrow> arrows){
+        for (RectangleWithThreadEvent rect:rectangles){
+            rect.setHighlighted(false);
+        }
+        for (Arrow arrow: arrows){
+            for (RectangleWithThreadEvent rect:rectangles){
+                if (rect.getThreadEvent() == arrow.getSourceThreadEvent()){
+                    rect.setHighlighted(true);
+                }
+                else if (rect.getThreadEvent() == arrow.getDestinationThreadEvent()){
+                    rect.setHighlighted(true);
+                }
+            }
+        }
     }
 }

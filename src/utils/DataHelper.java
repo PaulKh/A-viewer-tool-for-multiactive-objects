@@ -26,16 +26,16 @@ public class DataHelper {
         saturateActiveObjectsWithRequests(parsedData);
     }
     private void saturateActiveObjectsWithRequests(ParsedData parsedData){
-        int counter = 0, counter1 = 0;
+//        int counter = 0, counter1 = 0;
         for (DeserializedRequestData requestData:parsedData.getDeserializedRequestDataList()){
 //            if (requestData.getTypeOfRequest() == TypeOfRequest.RequestDelivered)
-                counter++;
+//                counter++;
             enrichThreadEvent(parsedData.getActiveObjects(), requestData);
         }
-        for (ActiveObject activeObject: parsedData.getActiveObjects())
-            for (ActiveObjectThread thread: activeObject.getThreads())
-                for (ThreadEvent threadEvent:thread.getEvents())
-                    counter1++;
+//        for (ActiveObject activeObject: parsedData.getActiveObjects())
+//            for (ActiveObjectThread thread: activeObject.getThreads())
+//                for (ThreadEvent threadEvent:thread.getEvents())
+//                    counter1++;
 
         this.activeObjects = parsedData.getActiveObjects();
     }

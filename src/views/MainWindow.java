@@ -1,6 +1,7 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
+import com.sun.deploy.util.StringUtils;
 import enums.IssueType;
 import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
@@ -18,6 +19,8 @@ import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class MainWindow extends JFrame implements ThreadEventClickedCallback{
+public class MainWindow extends JFrame implements ThreadEventClickedCallback {
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
@@ -80,8 +83,36 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback{
     }
 
     private void initSlider() {
+        scaleLabel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                labelPressed();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
         scaleSlider.setValue(500);
         scaleSlider.addChangeListener(e -> {
+            if (scrollPaneRoot == null)
+                return;
             scaleLabel.setText(scaleSlider.getValue() + " pixels/seconds");
             SizeHelper.instance().setScale(scaleSlider.getValue());
             for (ThreadFlowPanel flowPanel : flowPanels) {
@@ -96,6 +127,21 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback{
         });
     }
 
+    private void labelPressed() {
+        JFrame frame = new JFrame();
+        Object result = JOptionPane.showInputDialog(frame, "Scale should be between " + scaleSlider.getMinimum() + " and " + scaleSlider.getMaximum() + " pixels per second");
+        if (result.toString().matches("^-?\\d+$")){
+            if(Integer.valueOf(result.toString()) >= scaleSlider.getMinimum() && Integer.valueOf(result.toString()) <= scaleSlider.getMaximum()) {
+                scaleSlider.setValue(Integer.valueOf(result.toString()));
+                scaleLabel.setText(result.toString() + " pixels/second");
+            }
+            else
+                labelPressed();
+        }
+        else{
+            labelPressed();
+        }
+    }
     private void assignActionsToButtons() {
         if (directory != null)
             parseButton.setEnabled(true);
@@ -280,23 +326,38 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback{
 
     @Override
     public void threadEventClicked(ThreadEvent threadEvent) {
-        addArrowForThreadEvent(threadEvent);
-        List<ThreadEvent> threadEvents = dataHelper.getOutgoingThreadEvents(threadEvent);
-        for (ThreadEvent threadEvent1: threadEvents){
-            addArrowForThreadEvent(threadEvent1);
+        if (!scrollPaneRoot.removeArrowsIfAdded(threadEvent)) {
+            addArrowForThreadEvent(null, threadEvent);
+            List<ThreadEvent> threadEvents = dataHelper.getOutgoingThreadEvents(threadEvent);
+            for (ThreadEvent threadEvent1 : threadEvents) {
+                addArrowForThreadEvent(threadEvent, threadEvent1);
+            }
+        }
+        for (ThreadFlowPanel threadFlowPanel:flowPanels){
+            threadFlowPanel.setHighlightedEvent(scrollPaneRoot.getArrows());
         }
         scrollPaneRoot.repaint();
     }
-    private void addArrowForThreadEvent(ThreadEvent threadEvent){
+    private void addArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent){
         ThreadFlowPanel sourcePanel = null, destinationPanel = null;
         for (ThreadFlowPanel threadFlowPanel:flowPanels){
-            if (threadFlowPanel.getActiveObjectThread() == threadEvent.getThread()){
+            if (threadFlowPanel.getActiveObjectThread() == destinationThreadEvent.getThread()){
                 destinationPanel = threadFlowPanel;
             }
-            if(threadFlowPanel.getActiveObjectThread().getThreadId() == threadEvent.getSenderThreadId()){
+            if(threadFlowPanel.getActiveObjectThread().getThreadId() == destinationThreadEvent.getSenderThreadId()){
                 sourcePanel = threadFlowPanel;
+                if (sourceThreadEvent == null) {
+                    sourceThreadEvent = getSourceEvent(destinationThreadEvent, sourcePanel);
+                }
             }
         }
-        scrollPaneRoot.addArrow(threadEvent, sourcePanel, destinationPanel);
+        scrollPaneRoot.addArrow(sourceThreadEvent, destinationThreadEvent, sourcePanel, destinationPanel);
+    }
+    private ThreadEvent getSourceEvent(ThreadEvent threadEvent, ThreadFlowPanel flowPanel){
+        for (ThreadEvent tempThreadEvent:flowPanel.getActiveObjectThread().getEvents()){
+            if (threadEvent.getRequestSentTime() >= tempThreadEvent.getStartTime() && threadEvent.getRequestSentTime() <= tempThreadEvent.getFinishTime())
+                return tempThreadEvent;
+        }
+        return null;
     }
 }
