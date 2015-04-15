@@ -7,10 +7,7 @@ import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.DeserializedActiveObjectData;
-import supportModel.DeserializedRequestData;
-import supportModel.ErrorEntity;
-import supportModel.ParsedData;
+import supportModel.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,22 +22,18 @@ import java.util.Map;
  * Created by pkhvoros on 3/13/15.
  */
 public class DataParser {
-
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
-
     public ParsedData parseData(String sourceDirectory){
-        List<ActiveObject> activeObjects = new ArrayList<ActiveObject>();
+        List<DeserializedActiveObject> deserializedAOs = new ArrayList<DeserializedActiveObject>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
-
         try {
             Files.walk(Paths.get(sourceDirectory)).forEachOrdered(filePath -> {
                     if (!Files.isDirectory(filePath)) {
-                        WrappedActiveObjectWithError activeObject = null;
                         try {
                             if (filePath.getFileName().toString().startsWith("ActiveObject")){
-                                activeObject = readActiveObjectFile(filePath);
-                                activeObjects.add(activeObject.getActiveObject());
+                                DeserializedActiveObject activeObject = readActiveObjectFile(filePath);
+                                deserializedAOs.add(readActiveObjectFile(filePath));
                                 errorEntities.addAll(activeObject.getErrorEntities());
                             }
                             else if(filePath.getFileName().toString().startsWith("Request")){
@@ -54,14 +47,18 @@ public class DataParser {
                         } catch (WrongLogFileFormatException exception) {
                             errorEntities.add(generateWreckedWrongFileErrorEntity(exception.getMessage(), Error.WrongFileFormat));
                         }
-
                     }
-
             });
         } catch (IOException e) {
             e.printStackTrace();
         }
         ParsedData parsedData = new ParsedData();
+        List<ActiveObject> activeObjects = new ArrayList<>();
+        for(DeserializedActiveObject activeObject: deserializedAOs){
+            WrappedActiveObjectWithError activeObjectWithError = getActiveObjectFromDeserializedData(activeObject.getDeserializedThreadEvents());
+            activeObjects.add(activeObjectWithError.getActiveObject());
+            errorEntities.addAll(activeObjectWithError.getErrorEntities());
+        }
         parsedData.setActiveObjects(activeObjects);
         parsedData.setDeserializedRequestDataList(deserializedRequestDataList);
         parsedData.addAllErrorEntities(errorEntities);
@@ -96,10 +93,10 @@ public class DataParser {
         return requestWithError;
 
     }
-    private WrappedActiveObjectWithError readActiveObjectFile(Path path) throws WrongLogFileFormatException{
-        List<DeserializedActiveObjectData> deserializedLoggedDataList = new ArrayList<>();
+    private DeserializedActiveObject readActiveObjectFile(Path path) throws WrongLogFileFormatException{
+        List<DeserializedThreadEvent> deserializedLoggedDataList = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
-        DeserializedActiveObjectData currentRequest = null;
+        DeserializedThreadEvent currentRequest = null;
         int numberOfLinesForRequest = 0;
         try {
             List<String> lines = Files.readAllLines(path);
@@ -111,10 +108,10 @@ public class DataParser {
                             deserializedLoggedDataList.add(currentRequest);
                         }
                         if (line.startsWith("ServeStarted")) {
-                            currentRequest = new DeserializedActiveObjectData(TypeOfRequest.ServeStarted);
+                            currentRequest = new DeserializedThreadEvent(TypeOfRequest.ServeStarted);
                             numberOfLinesForRequest = TypeOfRequest.ServeStarted.getNumberOfLinesInLog();
                         } else if (line.startsWith("ServeStopped")) {
-                            currentRequest = new DeserializedActiveObjectData(TypeOfRequest.ServeStopped);
+                            currentRequest = new DeserializedThreadEvent(TypeOfRequest.ServeStopped);
                             numberOfLinesForRequest = TypeOfRequest.ServeStopped.getNumberOfLinesInLog();
                         } else {
                             throw new WrongLogFileFormatException(path.toString());
@@ -152,25 +149,27 @@ public class DataParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        WrappedActiveObjectWithError activeObjectWithError;
+        DeserializedActiveObject deserializedActiveObject = new DeserializedActiveObject();
         if (deserializedLoggedDataList.size() != 0)
-            activeObjectWithError = getActiveObjectFromDeserializedData(deserializedLoggedDataList);
+            deserializedActiveObject.setDeserializedThreadEvents(deserializedLoggedDataList);
+//            activeObjectWithError = getActiveObjectFromDeserializedData(deserializedLoggedDataList);
         else
             throw new WrongLogFileFormatException(path.toString());
         if (numberOfLinesForRequest != 0) {
-            activeObjectWithError.addErrorEntity(generateWreckedWrongFileErrorEntity(path.toString(), Error.WreckedFile));
+            errorEntities.add(generateWreckedWrongFileErrorEntity(path.toString(), Error.WreckedFile));
         }
-        return activeObjectWithError;
+        deserializedActiveObject.setErrorEntities(errorEntities);
+        return deserializedActiveObject;
     }
     private static ErrorEntity generateWreckedWrongFileErrorEntity(String path, Error error){
         ErrorEntity errorEntity = new ErrorEntity(error);
         errorEntity.setMessage("File name=" + path);
         return errorEntity;
     }
-    public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedActiveObjectData> dataList) {
+    public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedThreadEvent> dataList) {
         ActiveObject activeObject = new ActiveObject();
         List<StartedButNotFinishedEvent> startedButNotFinishedEvents = new ArrayList<>();
-        for (DeserializedActiveObjectData deserializedLoggedData : dataList) {
+        for (DeserializedThreadEvent deserializedLoggedData : dataList) {
             activeObject.setIdentifier(deserializedLoggedData.getActiveObjectIdentifier());
             ActiveObjectThread thread = activeObject.addThreadWithId(deserializedLoggedData.getThreadId());
             ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber(), thread);

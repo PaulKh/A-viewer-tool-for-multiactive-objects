@@ -6,7 +6,7 @@ import exceptions.WreckedFileException;
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class DeserializedActiveObjectData {
+public class DeserializedThreadEvent {
     private static int idCounter = 1;
     private TypeOfRequest typeOfRequest;
     private String activeObjectIdentifier;
@@ -16,7 +16,7 @@ public class DeserializedActiveObjectData {
     private String sender;
     private long sequenceNumber;
 
-    public DeserializedActiveObjectData(TypeOfRequest typeOfRequest) {
+    public DeserializedThreadEvent(TypeOfRequest typeOfRequest) {
         this.typeOfRequest = typeOfRequest;
     }
 
