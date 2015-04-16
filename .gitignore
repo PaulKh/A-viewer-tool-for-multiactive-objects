@@ -18,3 +18,5 @@ proguard/
 *.ipr
 *.iws
 .idea/
+
+.nfs*
