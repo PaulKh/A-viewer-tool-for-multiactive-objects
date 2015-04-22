@@ -37,24 +37,27 @@ public class ScalePanel extends JPanel {
 //        for (TuplePositionTime tuplePositionTime : horizontalPoints) {
 //            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
 //        }
-        g.fillRect(SizeHelper.threadTitleWidth, 8, SizeHelper.instance().getLength(), 2);
+        g.fillRect(getPadding(), 8, SizeHelper.instance().getLength(), 2);
         Date startDate = new Date(SizeHelper.instance().getMinimumTime());
         g.getFontMetrics().stringWidth(dateFormat.format(startDate));
         removeAll();
         int lastLabelPosition = Integer.MIN_VALUE;
         for (TuplePositionTime tuplePositionTime : horizontalPoints) {
             int labelLength = g.getFontMetrics().stringWidth(dateFormat.format(startDate));
-            if (SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() - (labelLength / 2) < lastLabelPosition) {
+            if (getPadding() + tuplePositionTime.getPosition() - (labelLength / 2) < lastLabelPosition) {
                 continue;
             }
             JLabel label = new JLabel(dateFormat.format(tuplePositionTime.getTime()));
-            lastLabelPosition = SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
-            label.setBounds(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
-            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
+            lastLabelPosition = getPadding() + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
+            label.setBounds(getPadding() + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
+            g.fillRect(getPadding() + tuplePositionTime.getPosition(), 0, 2, 8);
             add(label);
         }
     }
 
+    private int getPadding(){
+        return SizeHelper.threadTitleWidth + SizeHelper.activeObjectTitleWidth + 10;
+    }
     public void updateView() {
         this.setSize(SizeHelper.instance().getLength(), 30);
 //        repaint();

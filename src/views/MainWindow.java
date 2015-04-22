@@ -1,26 +1,23 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
-import com.sun.deploy.util.StringUtils;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import enums.IssueType;
-import exceptions.WrongLogFileFormatException;
+import listeners.TitlesPanelComponentListener;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.Arrow;
 import supportModel.ErrorEntity;
-import supportModel.ParsedData;
 import utils.DataHelper;
-import utils.DataParser;
 import utils.PreferencesHelper;
 import utils.SizeHelper;
 
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -63,11 +60,11 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         activeObjects = dataHelper.getActiveObjects();
 
         showErrorMessage(dataHelper.getErrorEntities());
-        buildTree();
+        buildTest();
     };
     private JSlider scaleSlider;
     private JLabel scaleLabel;
-    private JPanel scrollContainer;
+    private JPanel container;
     private ScalePanel scalePanel;
     private List<ThreadFlowPanel> flowPanels = new ArrayList<>();
 
@@ -112,7 +109,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         });
         scaleSlider.setValue(500);
         scaleSlider.addChangeListener(e -> {
-            if (scrollPaneRoot == null)
+            if (container == null)
                 return;
             scaleLabel.setText(scaleSlider.getValue() + " pixels/seconds");
             SizeHelper.instance().setScale(scaleSlider.getValue());
@@ -122,7 +119,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
             if (scalePanel != null) {
                 scalePanel.updateView();
             }
-            scrollPaneRoot.repaint();
+            container.repaint();
             revalidate();
             repaint();
         });
@@ -154,6 +151,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         setJMenuBar(menuBar);
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
+
         JMenuItem openAction = new JMenuItem("Open");
         JMenuItem exitAction = new JMenuItem("Exit");
         fileMenu.add(openAction);
@@ -161,6 +159,26 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
 
         openAction.addActionListener(openLogFiles);
         exitAction.addActionListener(e -> System.exit(0));
+
+
+//        JMenu editMenu = new JMenu("Edit");
+//        menuBar.add(editMenu);
+//        JMenuItem scaleAction = new JMenuItem("Change scale max/min values");
+//        editMenu.add(scaleAction);
+//
+//        scaleAction.addActionListener(e -> {
+//            JTextField minimumValue = new JTextField();
+//            JTextField maximumValue = new JTextField();
+//            final JComponent[] inputs = new JComponent[]{
+//                    new JLabel("Minimum value"),
+//                    minimumValue,
+//                    new JLabel("Maximum value"),
+//                    maximumValue,
+//            };
+//            JOptionPane.showMessageDialog(null, inputs, "My custom dialog", JOptionPane.PLAIN_MESSAGE);
+//
+//        });
+
         return menuBar;
     }
 
@@ -182,6 +200,123 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         SizeHelper.instance().init(minimumTime, maximumTime, scaleSlider.getValue());
     }
 
+    private void buildTest() {
+        discoverMinimumAndMaximum();
+        container.removeAll();
+
+        BorderLayout gridBagLayout = new BorderLayout();
+        container.setLayout(gridBagLayout);
+
+        GridBagLayout titleGridBagLayout = new GridBagLayout();
+        JPanel titlesPanel = new JPanel(titleGridBagLayout);
+        JScrollPane titleScrollPane = new JScrollPane(titlesPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        GridBagLayout mainGridBagLayout = new GridBagLayout();
+        scrollPaneRoot = new ScrollRootPanel(mainGridBagLayout);
+        JScrollPane mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        titleScrollPane.getVerticalScrollBar().setModel(mainScrollPane.getVerticalScrollBar().getModel());
+
+        scalePanel = new ScalePanel();
+        JScrollPane scaleScrollPane = new JScrollPane(scalePanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scaleScrollPane.getHorizontalScrollBar().setModel(mainScrollPane.getHorizontalScrollBar().getModel());
+
+        initScalePanel();
+        initFlowsPanel(scrollPaneRoot, mainGridBagLayout);
+        initTitlesView(titlesPanel, titleGridBagLayout);
+
+        JPanel titleScrollContainer = new JPanel();
+        titleScrollContainer.add(titleScrollPane);
+        container.add(titleScrollPane, BorderLayout.WEST);
+
+        JPanel mainScrollContainer = new JPanel();
+        mainScrollContainer.add(mainScrollPane);
+        container.add(mainScrollPane, BorderLayout.CENTER);
+
+        container.add(scaleScrollPane, BorderLayout.SOUTH);
+        revalidate();
+        repaint();
+    }
+
+    private void initScalePanel() {
+        GridBagLayout scaleGridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.weightx = 0.0;
+        constraints.gridwidth = GridBagConstraints.NONE;
+        constraints.fill = GridBagConstraints.BOTH;
+        scaleGridBagLayout.setConstraints(scalePanel, constraints);
+    }
+
+    private void initFlowsPanel(JPanel titlesPanel, GridBagLayout gridBagLayout) {
+        GridBagConstraints constraints = new GridBagConstraints();
+        for (ActiveObject activeObject : activeObjects) {
+
+            EmptyRow emptyRow1 = new EmptyRow(10);
+            constraints = new GridBagConstraints();
+            constraints.gridwidth = GridBagConstraints.REMAINDER;
+            gridBagLayout.setConstraints(emptyRow1, constraints);
+            titlesPanel.add(emptyRow1);
+
+            for (ActiveObjectThread thread : activeObject.getThreads()) {
+
+                ThreadFlowPanel flowPanel = new ThreadFlowPanel(thread);
+                flowPanels.add(flowPanel);
+                flowPanel.setCallback(this);
+                constraints = new GridBagConstraints();
+                constraints.weightx = 0.0;
+                constraints.gridwidth = GridBagConstraints.NONE;
+                constraints.fill = GridBagConstraints.BOTH;
+                gridBagLayout.setConstraints(flowPanel, constraints);
+                titlesPanel.add(flowPanel);
+
+                EmptyRow emptyRow2 = new EmptyRow(10);
+                constraints = new GridBagConstraints();
+                constraints.weightx = 1.0;
+                constraints.gridwidth = GridBagConstraints.REMAINDER;
+                gridBagLayout.setConstraints(emptyRow2, constraints);
+                titlesPanel.add(emptyRow2);
+            }
+        }
+    }
+
+    private void initTitlesView(JPanel titlesPanel, GridBagLayout gridBagLayout) {
+        GridBagConstraints constraints;
+        for (ActiveObject activeObject : activeObjects) {
+
+            EmptyRow emptyRow = new EmptyRow(10);
+            constraints = new GridBagConstraints();
+            constraints.gridwidth = GridBagConstraints.REMAINDER;
+            gridBagLayout.setConstraints(emptyRow, constraints);
+            titlesPanel.add(emptyRow);
+
+            ActiveObjectTitlePanel titlePanel = new ActiveObjectTitlePanel(activeObject.getIdentifier());
+            constraints = new GridBagConstraints();
+            constraints.weightx = 0.0;
+            constraints.gridwidth = 1;
+            constraints.gridheight = activeObject.getThreads().size() * 2;
+            constraints.fill = GridBagConstraints.VERTICAL;
+            gridBagLayout.setConstraints(titlePanel, constraints);
+            titlesPanel.add(titlePanel);
+
+            for (ActiveObjectThread thread : activeObject.getThreads()) {
+
+                ThreadTitlePanel threadTitlePanel = new ThreadTitlePanel(thread.getThreadId() + "");
+                constraints = new GridBagConstraints();
+                constraints.weightx = 0.0;
+                constraints.fill = GridBagConstraints.NONE;
+                gridBagLayout.setConstraints(threadTitlePanel, constraints);
+                titlesPanel.add(threadTitlePanel);
+                for (int i = 0; i < 2; i++) {
+                    EmptyRow emptyRow2 = new EmptyRow(10);
+                    constraints = new GridBagConstraints();
+                    constraints.weightx = 1.0;
+                    constraints.gridwidth = GridBagConstraints.REMAINDER;
+                    gridBagLayout.setConstraints(emptyRow2, constraints);
+                    titlesPanel.add(emptyRow2);
+                }
+            }
+        }
+    }
+
     private void buildTree() {
         discoverMinimumAndMaximum();
         GridBagLayout gridBagLayout = new GridBagLayout();
@@ -189,7 +324,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         if (scrollPane == null) {
             scrollPaneRoot = new ScrollRootPanel(gridBagLayout);
             scrollPane = new JScrollPane(scrollPaneRoot);
-            scrollContainer.add(scrollPane, BorderLayout.CENTER);
+            container.add(scrollPane, BorderLayout.CENTER);
         } else {
             scrollPaneRoot.removeAll();
             scrollPaneRoot.setLayout(gridBagLayout);
@@ -379,34 +514,34 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
      */
     private void $$$setupUI$$$() {
         rootPanel = new JPanel();
-        rootPanel.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        rootPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
-        rootPanel.add(panel1, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
+        panel1.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        rootPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
         selectLogFilesButton = new JButton();
         selectLogFilesButton.setText("Select log folder");
-        panel1.add(selectLogFilesButton, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final com.intellij.uiDesigner.core.Spacer spacer1 = new com.intellij.uiDesigner.core.Spacer();
-        panel1.add(spacer1, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, 1, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel1.add(selectLogFilesButton, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        panel1.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         parseButton = new JButton();
         parseButton.setEnabled(false);
         parseButton.setText("Parse logs and build execution tree");
-        panel1.add(parseButton, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel1.add(parseButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         activeObjectsRoot = new JPanel();
-        activeObjectsRoot.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
-        rootPanel.add(activeObjectsRoot, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));
-        scrollContainer = new JPanel();
-        scrollContainer.setLayout(new BorderLayout(0, 0));
-        activeObjectsRoot.add(scrollContainer, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        activeObjectsRoot.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        rootPanel.add(activeObjectsRoot, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));
+        container = new JPanel();
+        container.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        activeObjectsRoot.add(container, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         scaleLabel = new JLabel();
         scaleLabel.setText("500 pixels/second");
-        activeObjectsRoot.add(scaleLabel, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        activeObjectsRoot.add(scaleLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         scaleSlider = new JSlider();
         scaleSlider.setMaximum(10000);
         scaleSlider.setMinimum(1);
         scaleSlider.setPaintTicks(false);
         scaleSlider.setValue(100);
-        activeObjectsRoot.add(scaleSlider, new com.intellij.uiDesigner.core.GridConstraints(2, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        activeObjectsRoot.add(scaleSlider, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

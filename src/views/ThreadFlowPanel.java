@@ -86,24 +86,35 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        RectangleWithThreadEvent rect = getRectangleContainingPoint(e);
+        RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
         if (rect != null){
-            if (rect.getThreadEvent().getFinishTime() <= 0){
-                setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+            mouseMovedRectNotNull(rect);
+        }
+        else {
+            rect = getRectangleContainingPoint(e, 5);
+            if (rect != null){
+                mouseMovedRectNotNull(rect);
             }
             else {
-                float duration = (float) (((rect.getThreadEvent().getFinishTime() - rect.getThreadEvent().getStartTime()) / 10) / 100.0);
-                setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "<br>Duration:" + duration + " sec</html>");
+                setToolTipText(null);
             }
         }
-        else
-            setToolTipText(null);
     }
-    private RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent){
+    private void mouseMovedRectNotNull(RectangleWithThreadEvent rect){
+        if (rect.getThreadEvent().getFinishTime() <= 0){
+            setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+        }
+        else {
+            float duration = (float) (((rect.getThreadEvent().getFinishTime() - rect.getThreadEvent().getStartTime()) / 10) / 100.0);
+            setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "<br>Duration:" + duration + " sec</html>");
+        }
+    }
+    private RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent, int delta){
         int mx = mouseEvent.getX();
         int my = mouseEvent.getY();
         for (RectangleWithThreadEvent rect : rectangles) {
-            if (rect.getRectangle().contains(mx, my)) {
+            Rectangle tempRect = new Rectangle((int)rect.getRectangle().getX() - delta, (int)rect.getRectangle().getY(), (int)rect.getRectangle().getWidth() + delta * 2, (int)rect.getRectangle().getHeight());
+            if (tempRect.contains(mx, my)) {
                 return rect;
             }
         }
@@ -111,9 +122,15 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
     }
     @Override
     public void mouseClicked(MouseEvent e) {
-        RectangleWithThreadEvent rect = getRectangleContainingPoint(e);
+        RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
         if (rect != null && callback != null){
             callback.threadEventClicked(rect.threadEvent);
+        }
+        else{
+            rect = getRectangleContainingPoint(e, 5);
+            if (rect != null && callback != null){
+                callback.threadEventClicked(rect.threadEvent);
+            }
         }
     }
 

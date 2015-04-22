@@ -18,7 +18,7 @@ public class ActiveObjectTitlePanel extends JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.weightx = constraints.weighty = 1.0;
 
-        JTextArea label = new JTextArea("Active Object:" + title);
+        JTextArea label = new JTextArea("Active Object: " + title);
         label.setLineWrap(true);
         label.setWrapStyleWord(true);
         label.setBackground(null);
