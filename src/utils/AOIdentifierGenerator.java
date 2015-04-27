@@ -10,6 +10,6 @@ public class AOIdentifierGenerator {
         String[] temp = identifier.split(delims);
         delims = "[_]";
         activeObjectIdentifierCounter++;
-        return temp[temp.length - 1].split(delims)[0] + activeObjectIdentifierCounter;
+        return temp[temp.length - 1].split(delims)[0] + " " + activeObjectIdentifierCounter;
     }
 }

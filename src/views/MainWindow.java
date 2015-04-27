@@ -1,11 +1,11 @@
 package views;
 
+import callbacks.SwapButtonPressedListener;
 import callbacks.ThreadEventClickedCallback;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import enums.IssueType;
-import listeners.TitlesPanelComponentListener;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
@@ -14,21 +14,25 @@ import utils.DataHelper;
 import utils.PreferencesHelper;
 import utils.SizeHelper;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class MainWindow extends JFrame implements ThreadEventClickedCallback {
+public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener {
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
@@ -53,14 +57,17 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
     private JPanel rootPanel;
     private JButton parseButton;
     private JPanel activeObjectsRoot;
-    private JScrollPane scrollPane;
+    private JScrollPane mainScrollPane;
     private ScrollRootPanel scrollPaneRoot;
+    private List<SwapActiveObjectsButton> swapActiveObjectsButtons = new ArrayList<>();
     ActionListener parseLogsAndBuildTree = e -> {
         dataHelper = new DataHelper(directory);
         activeObjects = dataHelper.getActiveObjects();
 
         showErrorMessage(dataHelper.getErrorEntities());
-        buildTest();
+
+        discoverMinimumAndMaximum();
+        buildMainView();
     };
     private JSlider scaleSlider;
     private JLabel scaleLabel;
@@ -200,8 +207,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         SizeHelper.instance().init(minimumTime, maximumTime, scaleSlider.getValue());
     }
 
-    private void buildTest() {
-        discoverMinimumAndMaximum();
+    private void buildMainView() {
         container.removeAll();
 
         BorderLayout gridBagLayout = new BorderLayout();
@@ -213,7 +219,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
 
         GridBagLayout mainGridBagLayout = new GridBagLayout();
         scrollPaneRoot = new ScrollRootPanel(mainGridBagLayout);
-        JScrollPane mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         titleScrollPane.getVerticalScrollBar().setModel(mainScrollPane.getVerticalScrollBar().getModel());
 
         scalePanel = new ScalePanel();
@@ -233,6 +239,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
         container.add(mainScrollPane, BorderLayout.CENTER);
 
         container.add(scaleScrollPane, BorderLayout.SOUTH);
+
         revalidate();
         repaint();
     }
@@ -248,13 +255,14 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
 
     private void initFlowsPanel(JPanel titlesPanel, GridBagLayout gridBagLayout) {
         GridBagConstraints constraints = new GridBagConstraints();
+        boolean firstLineSkipped = false;
         for (ActiveObject activeObject : activeObjects) {
-
-            EmptyRow emptyRow1 = new EmptyRow(10);
-            constraints = new GridBagConstraints();
-            constraints.gridwidth = GridBagConstraints.REMAINDER;
-            gridBagLayout.setConstraints(emptyRow1, constraints);
-            titlesPanel.add(emptyRow1);
+            if (!firstLineSkipped) {
+                titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
+                firstLineSkipped = true;
+            } else {
+                titlesPanel.add(buildEmptyRow(gridBagLayout, 40));
+            }
 
             for (ActiveObjectThread thread : activeObject.getThreads()) {
 
@@ -267,26 +275,39 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
                 constraints.fill = GridBagConstraints.BOTH;
                 gridBagLayout.setConstraints(flowPanel, constraints);
                 titlesPanel.add(flowPanel);
-
-                EmptyRow emptyRow2 = new EmptyRow(10);
-                constraints = new GridBagConstraints();
-                constraints.weightx = 1.0;
-                constraints.gridwidth = GridBagConstraints.REMAINDER;
-                gridBagLayout.setConstraints(emptyRow2, constraints);
-                titlesPanel.add(emptyRow2);
+                titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
             }
         }
     }
 
     private void initTitlesView(JPanel titlesPanel, GridBagLayout gridBagLayout) {
         GridBagConstraints constraints;
+        boolean firstLineSkipped = false;
+        ActiveObject previousActiveObject = null;
         for (ActiveObject activeObject : activeObjects) {
+            if (!firstLineSkipped) {
+                this.swapActiveObjectsButtons.clear();
+                previousActiveObject = activeObject;
+                firstLineSkipped = true;
+                titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
+            } else {
+                try {
+                    SwapActiveObjectsButton button = new SwapActiveObjectsButton(previousActiveObject, activeObject, this);
+                    this.swapActiveObjectsButtons.add(button);
+                    previousActiveObject = activeObject;
+                    button.setOpaque(false);
+                    Image img = ImageIO.read(new FileInputStream("res/refresh-icon.png"));
+                    button.setIcon(new ImageIcon(img));
+                    button.setMargin(new Insets(0, 0, 0, 0));
+                    constraints = new GridBagConstraints();
+                    constraints.gridwidth = GridBagConstraints.REMAINDER;
+                    gridBagLayout.setConstraints(button, constraints);
+                    titlesPanel.add(button);
+                    titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
+                } catch (IOException ex) {
+                }
+            }
 
-            EmptyRow emptyRow = new EmptyRow(10);
-            constraints = new GridBagConstraints();
-            constraints.gridwidth = GridBagConstraints.REMAINDER;
-            gridBagLayout.setConstraints(emptyRow, constraints);
-            titlesPanel.add(emptyRow);
 
             ActiveObjectTitlePanel titlePanel = new ActiveObjectTitlePanel(activeObject.getIdentifier());
             constraints = new GridBagConstraints();
@@ -306,106 +327,19 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
                 gridBagLayout.setConstraints(threadTitlePanel, constraints);
                 titlesPanel.add(threadTitlePanel);
                 for (int i = 0; i < 2; i++) {
-                    EmptyRow emptyRow2 = new EmptyRow(10);
-                    constraints = new GridBagConstraints();
-                    constraints.weightx = 1.0;
-                    constraints.gridwidth = GridBagConstraints.REMAINDER;
-                    gridBagLayout.setConstraints(emptyRow2, constraints);
-                    titlesPanel.add(emptyRow2);
+                    titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
                 }
             }
         }
     }
 
-    private void buildTree() {
-        discoverMinimumAndMaximum();
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        GridBagConstraints constraints;
-        if (scrollPane == null) {
-            scrollPaneRoot = new ScrollRootPanel(gridBagLayout);
-            scrollPane = new JScrollPane(scrollPaneRoot);
-            container.add(scrollPane, BorderLayout.CENTER);
-        } else {
-            scrollPaneRoot.removeAll();
-            scrollPaneRoot.setLayout(gridBagLayout);
-        }
-        for (ActiveObject activeObject : activeObjects) {
-
-            ActiveObjectTitlePanel titlePanel = new ActiveObjectTitlePanel(activeObject.getIdentifier());
-            constraints = new GridBagConstraints();
-            constraints.weightx = 0.0;
-            constraints.fill = GridBagConstraints.NONE;
-            constraints.gridwidth = 1;
-            constraints.gridheight = activeObject.getThreads().size() * 2 + 1;
-            constraints.fill = GridBagConstraints.VERTICAL;
-            gridBagLayout.setConstraints(titlePanel, constraints);
-            scrollPaneRoot.add(titlePanel);
-
-            EmptyRow emptyRow1 = new EmptyRow(10);
-            constraints = new GridBagConstraints();
-            constraints.gridwidth = GridBagConstraints.REMAINDER;
-            gridBagLayout.setConstraints(emptyRow1, constraints);
-            scrollPaneRoot.add(emptyRow1);
-
-            for (ActiveObjectThread thread : activeObject.getThreads()) {
-
-                ThreadTitlePanel threadTitlePanel = new ThreadTitlePanel(thread.getThreadId() + "");
-                constraints = new GridBagConstraints();
-                constraints.weightx = 0.0;
-                constraints.fill = GridBagConstraints.NONE;
-                gridBagLayout.setConstraints(threadTitlePanel, constraints);
-                scrollPaneRoot.add(threadTitlePanel);
-
-                ThreadFlowPanel flowPanel = new ThreadFlowPanel(thread);
-                flowPanels.add(flowPanel);
-                flowPanel.setCallback(this);
-                constraints = new GridBagConstraints();
-                constraints.weightx = 0.0;
-                constraints.gridwidth = GridBagConstraints.NONE;
-                constraints.fill = GridBagConstraints.BOTH;
-                gridBagLayout.setConstraints(flowPanel, constraints);
-                scrollPaneRoot.add(flowPanel);
-
-                EmptyRow emptyRow2 = new EmptyRow(10);
-                constraints = new GridBagConstraints();
-                constraints.weightx = 1.0;
-                constraints.gridwidth = GridBagConstraints.REMAINDER;
-                gridBagLayout.setConstraints(emptyRow2, constraints);
-                scrollPaneRoot.add(emptyRow2);
-            }
-            EmptyRow emptyRow = new EmptyRow(50);
-            constraints = new GridBagConstraints();
-            constraints.gridwidth = GridBagConstraints.REMAINDER;
-            gridBagLayout.setConstraints(emptyRow, constraints);
-            scrollPaneRoot.add(emptyRow);
-        }
-        EmptyRow emptyRow = new EmptyRow(50);
-        constraints = new GridBagConstraints();
-        constraints.weightx = 0.0;
-        constraints.fill = GridBagConstraints.NONE;
-        gridBagLayout.setConstraints(emptyRow, constraints);
-        scrollPaneRoot.add(emptyRow);
-
-//        EmptyRow emptyRow1 = new EmptyRow(50);
-//        gridBagLayout.setConstraints(emptyRow1, constraints);
-//        scrollPaneRoot.add(emptyRow1);
-
-        scalePanel = new ScalePanel();
-        constraints = new GridBagConstraints();
-        constraints.weightx = 0.0;
-        constraints.gridwidth = GridBagConstraints.NONE;
-        constraints.fill = GridBagConstraints.BOTH;
-        gridBagLayout.setConstraints(scalePanel, constraints);
-        scrollPaneRoot.add(scalePanel);
-
-        EmptyRow emptyRow2 = new EmptyRow(50);
-        constraints = new GridBagConstraints();
+    private EmptyRow buildEmptyRow(GridBagLayout gridBagLayout, int height) {
+        EmptyRow emptyRow2 = new EmptyRow(height);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.weightx = 1.0;
         constraints.gridwidth = GridBagConstraints.REMAINDER;
         gridBagLayout.setConstraints(emptyRow2, constraints);
-        scrollPaneRoot.add(emptyRow2);
-        revalidate();
-        scrollPaneRoot.setFlowX((flowPanels.size() != 0) ? flowPanels.get(0).getX() : 200);
-        repaint();
+        return emptyRow2;
     }
 
     private void showErrorMessage(List<ErrorEntity> errorEntities) {
@@ -496,6 +430,14 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback {
                 return tempThreadEvent;
         }
         return null;
+    }
+
+    @Override
+    public void swapButtonPressed(SwapActiveObjectsButton button) {
+        int position = mainScrollPane.getVerticalScrollBar().getValue();
+        Collections.swap(activeObjects, activeObjects.indexOf(button.getActiveObject1()), activeObjects.indexOf(button.getActiveObject2()));
+        buildMainView();
+        SwingUtilities.invokeLater(() -> mainScrollPane.getVerticalScrollBar().setValue(position));
     }
 
     {
