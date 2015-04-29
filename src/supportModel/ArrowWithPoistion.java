@@ -3,14 +3,14 @@ package supportModel;
 import model.ThreadEvent;
 
 /**
- * Created by pkhvoros on 4/8/15.
+ * Created by pkhvoros on 4/28/15.
  */
-public class Arrow {
+public class ArrowWithPoistion {
     private int y1, y2;
     private ThreadEvent sourceThreadEvent;
     private ThreadEvent destinationThreadEvent;
 
-    public Arrow(int y1, int y2, ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent) {
+    public ArrowWithPoistion(int y1, int y2, ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent) {
         this.y1 = y1;
         this.y2 = y2;
         this.sourceThreadEvent = sourceThreadEvent;
@@ -33,11 +33,4 @@ public class Arrow {
         return y2;
     }
 
-    public void setY1(int y1) {
-        this.y1 = y1;
-    }
-
-    public void setY2(int y2) {
-        this.y2 = y2;
-    }
 }

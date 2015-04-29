@@ -4,6 +4,7 @@ import callbacks.ThreadEventClickedCallback;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.Arrow;
+import utils.ArrowHandler;
 import utils.SizeHelper;
 
 import javax.swing.*;
@@ -210,11 +211,11 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
 //        g2.setStroke(oldStroke);
 
     }
-    public void setHighlightedEvent(List<Arrow> arrows){
+    public void setHighlightedEvent(){
         for (RectangleWithThreadEvent rect:rectangles){
             rect.setHighlighted(false);
         }
-        for (Arrow arrow: arrows){
+        for (Arrow arrow: ArrowHandler.instance().getArrows()){
             for (RectangleWithThreadEvent rect:rectangles){
                 if (rect.getThreadEvent() == arrow.getSourceThreadEvent()){
                     rect.setHighlighted(true);

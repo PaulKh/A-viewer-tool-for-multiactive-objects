@@ -1,44 +1,20 @@
 package views;
 
-import model.ThreadEvent;
 import supportModel.Arrow;
+import utils.ArrowHandler;
 import utils.SizeHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by pkhvoros on 4/1/15.
  */
 public class ScrollRootPanel extends JPanel {
-    private List<Arrow> arrows = new ArrayList<>();
     private int flowX;
 
-    public boolean removeArrowsIfAdded(ThreadEvent threadEvent){
-        List<Arrow> elementsToRemove = new ArrayList<>();
-        for (Arrow arrow:arrows){
-            if (arrow.getDestinationThreadEvent() == threadEvent)
-                elementsToRemove.add(arrow);
-            else if (arrow.getSourceThreadEvent() == threadEvent)
-                elementsToRemove.add(arrow);
-        }
-        arrows.removeAll(elementsToRemove);
-        return elementsToRemove.size() > 0;
-    }
-    public void addArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, ThreadFlowPanel sourcePanel, ThreadFlowPanel destinationPanel){
-        for (Arrow arrow:arrows){
-            if (arrow.getDestinationThreadEvent() == destinationThreadEvent)
-                return;
-        }
-        int y1 = 0;
-        if (sourcePanel != null){
-            y1 = sourcePanel.getY() + sourcePanel.getHeight() / 2;
-        }
-        int y2 = destinationPanel.getY() + destinationPanel.getHeight() / 2;
-        this.arrows.add(new Arrow(y1, y2, sourceThreadEvent, destinationThreadEvent));
-    }
+
+
 
     public ScrollRootPanel(LayoutManager layout) {
         super(layout);
@@ -47,7 +23,7 @@ public class ScrollRootPanel extends JPanel {
     @Override
     public void paint(Graphics g1) {
         super.paint(g1);
-        for (Arrow arrow: arrows){
+        for (Arrow arrow: ArrowHandler.instance().getArrows()){
             int x1 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getRequestSentTime()) + flowX;
             int x2 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getDerivedTime()) + flowX;
             drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
@@ -75,10 +51,6 @@ public class ScrollRootPanel extends JPanel {
 
         g.drawLine(x1, y1, x2, y2);
         g.fillPolygon(xpoints, ypoints, 3);
-    }
-
-    public List<Arrow> getArrows() {
-        return arrows;
     }
 
     public void setFlowX(int flowX) {

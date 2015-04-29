@@ -1,22 +1,22 @@
 package views;
 
+import builders.ErrorDialogBuilder;
 import callbacks.SwapButtonPressedListener;
 import callbacks.ThreadEventClickedCallback;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import enums.IssueType;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.ErrorEntity;
+import utils.ArrowHandler;
 import utils.DataHelper;
 import utils.PreferencesHelper;
 import utils.SizeHelper;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -61,6 +61,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private ScrollRootPanel scrollPaneRoot;
     private List<SwapActiveObjectsButton> swapActiveObjectsButtons = new ArrayList<>();
     ActionListener parseLogsAndBuildTree = e -> {
+        ArrowHandler.instance().clearAll();
         dataHelper = new DataHelper(directory);
         activeObjects = dataHelper.getActiveObjects();
 
@@ -343,101 +344,62 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     private void showErrorMessage(List<ErrorEntity> errorEntities) {
-        if (errorEntities.size() == 0) {
-            return;
-        }
-//        String message = "";
-//        for (ErrorEntity errorEntity:errorEntities){
-//            message = message + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
-//        }
-        JDialog dialog = new JDialog(this);
-        dialog.setTitle("Issue log");
-        dialog.setLocationByPlatform(true);
-        StyleContext sc = new StyleContext();
-        final DefaultStyledDocument doc = new DefaultStyledDocument(sc);
-
-        final Style errorStyle = sc.addStyle("ErrorStyle", null);
-        errorStyle.addAttribute(StyleConstants.Foreground, Color.red);
-
-        JTextPane pane = new JTextPane(doc);
-        try {
-            for (ErrorEntity errorEntity : errorEntities) {
-                if (errorEntity.getErrorType().getIssueType() == IssueType.Error ||
-                        errorEntity.getErrorType().getIssueType() == IssueType.FatalError) {
-                    String message = "ERROR: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
-                    doc.insertString(doc.getLength(), message, null);
-                    doc.setParagraphAttributes(doc.getLength() - message.length(), 1, errorStyle, false);
-                }
-            }
-            for (ErrorEntity errorEntity : errorEntities) {
-                if (errorEntity.getErrorType().getIssueType() == IssueType.Warning) {
-                    String message = "WARNING: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
-                    doc.insertString(doc.getLength(), message, null);
-                    doc.setParagraphAttributes(doc.getLength() - message.length(), 1, errorStyle, false);
-                }
-            }
-            for (ErrorEntity errorEntity : errorEntities) {
-                if (errorEntity.getErrorType().getIssueType() == IssueType.Info) {
-                    String message = "INFO: " + errorEntity.getErrorType().getMessage() + errorEntity.getMessage() + "\n";
-                    doc.insertString(doc.getLength(), message, null);
-                }
-            }
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-        }
-        pane.select(0, 0);
-        pane.setEditable(false);
-        dialog.setPreferredSize(new Dimension(400, 300));
-        dialog.add(new JScrollPane(pane));
-        dialog.pack();
-        dialog.setVisible(true);
+        ErrorDialogBuilder.buildErrorDialog(errorEntities, this);
     }
 
     @Override
     public void threadEventClicked(ThreadEvent threadEvent) {
-        if (!scrollPaneRoot.removeArrowsIfAdded(threadEvent)) {
-            addArrowForThreadEvent(null, threadEvent);
-            List<ThreadEvent> threadEvents = dataHelper.getOutgoingThreadEvents(threadEvent);
-            for (ThreadEvent threadEvent1 : threadEvents) {
-                addArrowForThreadEvent(threadEvent, threadEvent1);
-            }
+        List<ActiveObject> activeObjectList = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels, dataHelper);
+        if (reorderActiveObjectsDependingOnSelected(activeObjectList)) {
+            updateView();
+        } else {
+            highlighThreadEvents();
         }
-        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
-            threadFlowPanel.setHighlightedEvent(scrollPaneRoot.getArrows());
-        }
+
         scrollPaneRoot.repaint();
-    }
-
-    private void addArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent) {
-        ThreadFlowPanel sourcePanel = null, destinationPanel = null;
-        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
-            if (threadFlowPanel.getActiveObjectThread() == destinationThreadEvent.getThread()) {
-                destinationPanel = threadFlowPanel;
-            }
-            if (threadFlowPanel.getActiveObjectThread().getThreadId() == destinationThreadEvent.getSenderThreadId()) {
-                sourcePanel = threadFlowPanel;
-                if (sourceThreadEvent == null) {
-                    sourceThreadEvent = getSourceEvent(destinationThreadEvent, sourcePanel);
-                }
-            }
-        }
-        scrollPaneRoot.addArrow(sourceThreadEvent, destinationThreadEvent, sourcePanel, destinationPanel);
-    }
-
-    private ThreadEvent getSourceEvent(ThreadEvent threadEvent, ThreadFlowPanel flowPanel) {
-        for (ThreadEvent tempThreadEvent : flowPanel.getActiveObjectThread().getEvents()) {
-            if (threadEvent.getRequestSentTime() >= tempThreadEvent.getStartTime() && threadEvent.getRequestSentTime() <= tempThreadEvent.getFinishTime())
-                return tempThreadEvent;
-        }
-        return null;
     }
 
     @Override
     public void swapButtonPressed(SwapActiveObjectsButton button) {
-        int position = mainScrollPane.getVerticalScrollBar().getValue();
         Collections.swap(activeObjects, activeObjects.indexOf(button.getActiveObject1()), activeObjects.indexOf(button.getActiveObject2()));
+        updateView();
+    }
+
+    private void updateView() {
+        int position = mainScrollPane.getVerticalScrollBar().getValue();
         buildMainView();
-        SwingUtilities.invokeLater(() -> mainScrollPane.getVerticalScrollBar().setValue(position));
+        ArrowHandler.instance().updateArrows(flowPanels);
+        SwingUtilities.invokeLater(() -> {
+            mainScrollPane.getVerticalScrollBar().setValue(position);
+        });
+        highlighThreadEvents();
+    }
+
+    private void highlighThreadEvents() {
+        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
+            threadFlowPanel.setHighlightedEvent();
+        }
+    }
+
+    private boolean reorderActiveObjectsDependingOnSelected(List<ActiveObject> activeObjectList) {
+        int currentPosition = -1;
+        boolean swapped = false;
+        for (int i = 0; i < activeObjects.size(); i++) {
+            ActiveObject activeObject = activeObjects.get(i);
+            boolean contains = activeObjectList.contains(activeObject);
+            if (!contains)
+                continue;
+            else if (currentPosition == -1) {
+                currentPosition = i;
+            } else if (currentPosition + 1 == i) {
+                currentPosition++;
+            } else {
+                currentPosition++;
+                Collections.swap(activeObjects, currentPosition, i);
+                swapped = true;
+            }
+        }
+        return swapped;
     }
 
     {
