@@ -4,6 +4,7 @@ import callbacks.SwapButtonPressedListener;
 import model.ActiveObject;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -26,5 +27,10 @@ public class SwapActiveObjectsButton extends JButton{
 
     public ActiveObject getActiveObject2() {
         return activeObject2;
+    }
+
+    @Override
+    public Dimension getPreferredSize(){
+        return new Dimension(30, 30);
     }
 }

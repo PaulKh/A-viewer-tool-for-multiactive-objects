@@ -1,6 +1,10 @@
 package views;
 
-import builders.ErrorDialogBuilder;
+import enums.OrderingPolicyEnum;
+import enums.ViewPositionPolicyEnum;
+import supportModel.OrderStateOfActiveObjects;
+import utils.*;
+import views.builders.ErrorDialogBuilder;
 import callbacks.SwapButtonPressedListener;
 import callbacks.ThreadEventClickedCallback;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -10,13 +14,11 @@ import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.ErrorEntity;
-import utils.ArrowHandler;
-import utils.DataHelper;
-import utils.PreferencesHelper;
-import utils.SizeHelper;
+import views.builders.QueuesDialogBuilder;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -36,6 +38,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
+    private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
     ActionListener openLogFiles = e -> {
         final JFileChooser fc = new JFileChooser();
         if (directory != null && Files.exists(Paths.get(directory))) {
@@ -73,6 +76,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private JSlider scaleSlider;
     private JLabel scaleLabel;
     private JPanel container;
+    private JButton undoReorderingButton;
     private ScalePanel scalePanel;
     private List<ThreadFlowPanel> flowPanels = new ArrayList<>();
 
@@ -82,37 +86,30 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         setContentPane(rootPanel);
         setJMenuBar(createMenuBar());
         assignActionsToButtons();
+        initUndoAction();
         initSlider();
         pack();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
-
+    private void initUndoAction(){
+        undoReorderingButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeObjects = undoQueue.undo(activeObjects);
+                undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+                updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
+                highlighThreadEvents();
+            }
+        });
+    }
     private void initSlider() {
-        scaleLabel.addMouseListener(new MouseListener() {
+        scaleLabel.setBorder(new EmptyBorder(0, 0, 0, 15));
+        scaleLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
                 labelPressed();
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
             }
         });
         scaleSlider.setValue(500);
@@ -161,13 +158,21 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         menuBar.add(fileMenu);
 
         JMenuItem openAction = new JMenuItem("Open");
+        JMenuItem preferencesAction = new JMenuItem("Preferences");
         JMenuItem exitAction = new JMenuItem("Exit");
         fileMenu.add(openAction);
+        fileMenu.add(preferencesAction);
         fileMenu.add(exitAction);
 
         openAction.addActionListener(openLogFiles);
         exitAction.addActionListener(e -> System.exit(0));
+        preferencesAction.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SettingsDialog settingsDialog = new SettingsDialog();
 
+            }
+        });
 
 //        JMenu editMenu = new JMenu("Edit");
 //        menuBar.add(editMenu);
@@ -350,37 +355,57 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     @Override
     public void threadEventClicked(ThreadEvent threadEvent) {
         List<ActiveObject> activeObjectList = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels, dataHelper);
-        if (reorderActiveObjectsDependingOnSelected(activeObjectList)) {
-            updateView();
-        } else {
-            highlighThreadEvents();
+        if (PreferencesHelper.getReorderingPolicy(this.getClass()) == OrderingPolicyEnum.ENABLED) {
+            OrderStateOfActiveObjects state = undoQueue.generateStateByActiveObjects(activeObjects);
+            if (reorderActiveObjectsDependingOnSelected(activeObjectList)) {
+                updateView(ViewPositionPolicyEnum.TO_THE_START);
+                undoQueue.addState(state);
+                undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+            }
         }
-
+        highlighThreadEvents();
         scrollPaneRoot.repaint();
     }
 
     @Override
-    public void swapButtonPressed(SwapActiveObjectsButton button) {
-        Collections.swap(activeObjects, activeObjects.indexOf(button.getActiveObject1()), activeObjects.indexOf(button.getActiveObject2()));
-        updateView();
+    public void threadClicked(ActiveObject activeObject, long timeClicked) {
+        QueuesDialogBuilder.buildQueueDialog(this, activeObject, timeClicked);
     }
 
-    private void updateView() {
-        int position = mainScrollPane.getVerticalScrollBar().getValue();
-        buildMainView();
-        ArrowHandler.instance().updateArrows(flowPanels);
-        SwingUtilities.invokeLater(() -> {
-            mainScrollPane.getVerticalScrollBar().setValue(position);
-        });
+    @Override
+    public void swapButtonPressed(SwapActiveObjectsButton button) {
+        undoQueue.addNewState(activeObjects);
+        undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+        Collections.swap(activeObjects, activeObjects.indexOf(button.getActiveObject1()), activeObjects.indexOf(button.getActiveObject2()));
+        updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
         highlighThreadEvents();
     }
 
+    private void updateView(ViewPositionPolicyEnum positionPolicyEnum) {
+        buildMainView();
+        Point position = ArrowHandler.instance().updateArrows(flowPanels);
+        switch (positionPolicyEnum){
+            case KEEP_ON_THE_CURRENT_PLACE:
+                position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
+                break;
+            case TO_THE_START:
+                position = new Point(position.x - 50, position.y - 50);
+                break;
+        }
+
+        final Point finalPosition = position;
+        SwingUtilities.invokeLater(() -> {
+            mainScrollPane.getVerticalScrollBar().setValue(finalPosition.y);
+            mainScrollPane.getHorizontalScrollBar().setValue(finalPosition.x);
+        });
+    }
+// highlights events selected by user and all dependent
     private void highlighThreadEvents() {
         for (ThreadFlowPanel threadFlowPanel : flowPanels) {
             threadFlowPanel.setHighlightedEvent();
         }
     }
-
+// reorder active objects in the way that dependent objects are situated nearby. Returns true if
     private boolean reorderActiveObjectsDependingOnSelected(List<ActiveObject> activeObjectList) {
         int currentPosition = -1;
         boolean swapped = false;

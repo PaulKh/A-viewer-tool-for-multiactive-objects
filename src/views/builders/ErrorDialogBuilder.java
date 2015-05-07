@@ -1,4 +1,4 @@
-package builders;
+package views.builders;
 
 import enums.IssueType;
 import supportModel.ErrorEntity;
@@ -6,7 +6,6 @@ import supportModel.ErrorEntity;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.util.*;
 
 /**
  * Created by pkhvoros on 4/28/15.

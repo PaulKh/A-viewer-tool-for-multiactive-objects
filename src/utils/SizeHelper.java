@@ -53,4 +53,7 @@ public class SizeHelper {
         long tempTime = timeInMilliseconds - minimumTime;
         return (int) ((length * tempTime) / (maximumTime - minimumTime));
     }
+    public long convertLengthToTime(int xPosition){
+        return minimumTime + (xPosition * (maximumTime - minimumTime)) / length;
+    }
 }

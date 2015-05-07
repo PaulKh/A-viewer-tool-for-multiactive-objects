@@ -103,11 +103,11 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
     }
     private void mouseMovedRectNotNull(RectangleWithThreadEvent rect){
         if (rect.getThreadEvent().getFinishTime() <= 0){
-            setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "</html>");
+            setToolTipText("<html>ERROR:Request never stop<br>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getUniqueMethodName() + "</html>");
         }
         else {
             float duration = (float) (((rect.getThreadEvent().getFinishTime() - rect.getThreadEvent().getStartTime()) / 10) / 100.0);
-            setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getMethodName() + "<br>Duration:" + duration + " sec</html>");
+            setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getUniqueMethodName() + "<br>Duration:" + duration + " sec</html>");
         }
     }
     private RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent, int delta){
@@ -132,6 +132,10 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
             if (rect != null && callback != null){
                 callback.threadEventClicked(rect.threadEvent);
             }
+        }
+        long time = SizeHelper.instance().convertLengthToTime(e.getX());
+        if (callback != null){
+            callback.threadClicked(activeObjectThread.getActiveObject(), time);
         }
     }
 

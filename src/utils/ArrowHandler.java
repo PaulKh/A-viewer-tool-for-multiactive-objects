@@ -5,6 +5,7 @@ import model.ThreadEvent;
 import supportModel.Arrow;
 import views.ThreadFlowPanel;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,11 +90,20 @@ public class ArrowHandler {
         }
         return null;
     }
-    public void updateArrows(List<ThreadFlowPanel> flowPanels){
+    public Point updateArrows(List<ThreadFlowPanel> flowPanels){
+        long timeExecuted = Long.MAX_VALUE;
+        int yPosition = Integer.MAX_VALUE;
         for (Arrow arrow:arrows){
             updateArrow(arrow, flowPanels);
+            System.out.println(arrow.getSourceThreadEvent() + " " + arrow.getDestinationThreadEvent());
+            if (arrow.getDestinationThreadEvent().getRequestSentTime() < timeExecuted){
+                timeExecuted = arrow.getDestinationThreadEvent().getRequestSentTime();
+//                System.out.println("time executed=" + timeExecuted);
+                yPosition = Math.min(arrow.getY1(), arrow.getY2());
+            }
         }
-        return;
+
+        return new Point(SizeHelper.instance().convertTimeToLength(timeExecuted), yPosition);
     }
     private void updateArrow(Arrow arrow, List<ThreadFlowPanel> flowPanels){
         ThreadFlowPanel sourcePanel = null, destinationPanel = null;

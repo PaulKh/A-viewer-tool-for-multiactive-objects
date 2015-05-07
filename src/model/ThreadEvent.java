@@ -4,7 +4,10 @@ package model;
  * Created by pkhvoros on 3/13/15.
  */
 public class ThreadEvent {
+    private static int counter = 0;
+    private int localUniqueId;
     //WARNING: sequence number might be not unique in thread
+    //Id of calling active object + sequence number
     private long sequenceNumber;
     private long startTime;
     private long finishTime;
@@ -18,6 +21,7 @@ public class ThreadEvent {
     public ThreadEvent(long sequenceNumber, ActiveObjectThread thread) {
         this.sequenceNumber = sequenceNumber;
         this.thread = thread;
+        localUniqueId = counter++;
     }
 
     public long getStartTime() {
@@ -86,5 +90,9 @@ public class ThreadEvent {
 
     public ActiveObjectThread getThread() {
         return thread;
+    }
+
+    public String getUniqueMethodName(){
+        return methodName + "_" + localUniqueId;
     }
 }
