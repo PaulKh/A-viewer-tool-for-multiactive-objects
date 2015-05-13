@@ -17,7 +17,7 @@ public class ArrowHandler {
     private List<Arrow> arrows = new ArrayList<>();
 
     public static ArrowHandler instance() {
-        if (arrowHolder == null){
+        if (arrowHolder == null) {
             arrowHolder = new ArrowHandler();
         }
         return arrowHolder;
@@ -26,12 +26,14 @@ public class ArrowHandler {
     public List<Arrow> getArrows() {
         return arrows;
     }
-    public void clearAll(){
+
+    public void clearAll() {
         arrows.clear();
     }
-    private boolean removeArrowsIfAdded(ThreadEvent threadEvent){
+
+    private boolean removeArrowsIfAdded(ThreadEvent threadEvent) {
         List<Arrow> elementsToRemove = new ArrayList<>();
-        for (Arrow arrow: arrows){
+        for (Arrow arrow : arrows) {
             if (arrow.getDestinationThreadEvent() == threadEvent)
                 elementsToRemove.add(arrow);
             else if (arrow.getSourceThreadEvent() == threadEvent)
@@ -40,18 +42,20 @@ public class ArrowHandler {
         arrows.removeAll(elementsToRemove);
         return elementsToRemove.size() > 0;
     }
-    private Arrow createArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, ThreadFlowPanel sourcePanel, ThreadFlowPanel destinationPanel){
-        for (Arrow arrow: arrows){
+
+    private Arrow createArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, ThreadFlowPanel sourcePanel, ThreadFlowPanel destinationPanel) {
+        for (Arrow arrow : arrows) {
             if (arrow.getDestinationThreadEvent() == destinationThreadEvent)
                 return null;
         }
         int y1 = 0;
-        if (sourcePanel != null){
+        if (sourcePanel != null) {
             y1 = sourcePanel.getY() + sourcePanel.getHeight() / 2;
         }
         int y2 = destinationPanel.getY() + destinationPanel.getHeight() / 2;
         return new Arrow(y1, y2, sourceThreadEvent, destinationThreadEvent);
     }
+
     private Arrow createArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, List<ThreadFlowPanel> flowPanels) {
         ThreadFlowPanel sourcePanel = null, destinationPanel = null;
         for (ThreadFlowPanel threadFlowPanel : flowPanels) {
@@ -67,6 +71,7 @@ public class ArrowHandler {
         }
         return createArrow(sourceThreadEvent, destinationThreadEvent, sourcePanel, destinationPanel);
     }
+
     public List<ActiveObject> addArrowsForEvent(ThreadEvent threadEvent, List<ThreadFlowPanel> flowPanels, DataHelper dataHelper) {
         List<Arrow> tempArrows = new ArrayList<>();
         if (!ArrowHandler.instance().removeArrowsIfAdded(threadEvent)) {
@@ -79,10 +84,12 @@ public class ArrowHandler {
         this.arrows.addAll(tempArrows);
         return getAllActiveObjectsFromArrows(tempArrows);
     }
-    private void addArrow(List<Arrow> arrows1, Arrow arrow){
+
+    private void addArrow(List<Arrow> arrows1, Arrow arrow) {
         if (arrow != null)
             arrows1.add(arrow);
     }
+
     private ThreadEvent getSourceEvent(ThreadEvent threadEvent, ThreadFlowPanel flowPanel) {
         for (ThreadEvent tempThreadEvent : flowPanel.getActiveObjectThread().getEvents()) {
             if (threadEvent.getRequestSentTime() >= tempThreadEvent.getStartTime() && threadEvent.getRequestSentTime() <= tempThreadEvent.getFinishTime())
@@ -90,22 +97,22 @@ public class ArrowHandler {
         }
         return null;
     }
-    public Point updateArrows(List<ThreadFlowPanel> flowPanels){
+
+    public Point updateArrows(List<ThreadFlowPanel> flowPanels) {
         long timeExecuted = Long.MAX_VALUE;
         int yPosition = Integer.MAX_VALUE;
-        for (Arrow arrow:arrows){
+        for (Arrow arrow : arrows) {
             updateArrow(arrow, flowPanels);
-            System.out.println(arrow.getSourceThreadEvent() + " " + arrow.getDestinationThreadEvent());
-            if (arrow.getDestinationThreadEvent().getRequestSentTime() < timeExecuted){
+            if (arrow.getDestinationThreadEvent().getRequestSentTime() < timeExecuted) {
                 timeExecuted = arrow.getDestinationThreadEvent().getRequestSentTime();
-//                System.out.println("time executed=" + timeExecuted);
                 yPosition = Math.min(arrow.getY1(), arrow.getY2());
             }
         }
 
         return new Point(SizeHelper.instance().convertTimeToLength(timeExecuted), yPosition);
     }
-    private void updateArrow(Arrow arrow, List<ThreadFlowPanel> flowPanels){
+
+    private void updateArrow(Arrow arrow, List<ThreadFlowPanel> flowPanels) {
         ThreadFlowPanel sourcePanel = null, destinationPanel = null;
         for (ThreadFlowPanel threadFlowPanel : flowPanels) {
             if (threadFlowPanel.getActiveObjectThread() == arrow.getDestinationThreadEvent().getThread()) {
@@ -116,24 +123,25 @@ public class ArrowHandler {
             }
         }
         int y1 = 0;
-        if (sourcePanel != null){
+        if (sourcePanel != null) {
             y1 = sourcePanel.getY() + sourcePanel.getHeight() / 2;
         }
         int y2 = destinationPanel.getY() + destinationPanel.getHeight() / 2;
         arrow.setY1(y1);
         arrow.setY2(y2);
     }
-    private List<ActiveObject> getAllActiveObjectsFromArrows(List<Arrow> arrowList){
+
+    private List<ActiveObject> getAllActiveObjectsFromArrows(List<Arrow> arrowList) {
         List<ActiveObject> activeObjects = new ArrayList<>();
-        for (Arrow arrow:arrowList){
+        for (Arrow arrow : arrowList) {
             ActiveObject sourceActiveObject = null;
-            if (arrow.getSourceThreadEvent()!= null)
+            if (arrow.getSourceThreadEvent() != null)
                 sourceActiveObject = arrow.getSourceThreadEvent().getThread().getActiveObject();
             ActiveObject destinationActiveObject = arrow.getDestinationThreadEvent().getThread().getActiveObject();
-            if (!activeObjects.contains(sourceActiveObject)){
+            if (!activeObjects.contains(sourceActiveObject)) {
                 activeObjects.add(sourceActiveObject);
             }
-            if (!activeObjects.contains(destinationActiveObject)){
+            if (!activeObjects.contains(destinationActiveObject)) {
                 activeObjects.add(destinationActiveObject);
             }
         }

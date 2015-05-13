@@ -23,38 +23,37 @@ import java.util.Map;
  */
 public class DataParser {
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
-    public ParsedData parseData(String sourceDirectory){
+
+    public ParsedData parseData(String sourceDirectory) {
         List<DeserializedActiveObject> deserializedAOs = new ArrayList<DeserializedActiveObject>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
         try {
             Files.walk(Paths.get(sourceDirectory)).forEachOrdered(filePath -> {
-                    if (!Files.isDirectory(filePath)) {
-                        try {
-                            if (filePath.getFileName().toString().startsWith("ActiveObject")){
-                                DeserializedActiveObject activeObject = readActiveObjectFile(filePath);
-                                deserializedAOs.add(readActiveObjectFile(filePath));
-                                errorEntities.addAll(activeObject.getErrorEntities());
-                            }
-                            else if(filePath.getFileName().toString().startsWith("Request")){
-                                WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
-                                errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
-                                deserializedRequestDataList.addAll(wrappedRequestWithError.getRequestData());
-                            }
-                            else{
-                                errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
-                            }
-                        } catch (WrongLogFileFormatException exception) {
-                            errorEntities.add(generateWreckedWrongFileErrorEntity(exception.getMessage(), Error.WrongFileFormat));
+                if (!Files.isDirectory(filePath)) {
+                    try {
+                        if (filePath.getFileName().toString().startsWith("ActiveObject")) {
+                            DeserializedActiveObject activeObject = readActiveObjectFile(filePath);
+                            deserializedAOs.add(readActiveObjectFile(filePath));
+                            errorEntities.addAll(activeObject.getErrorEntities());
+                        } else if (filePath.getFileName().toString().startsWith("Request")) {
+                            WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
+                            errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
+                            deserializedRequestDataList.addAll(wrappedRequestWithError.getRequestData());
+                        } else {
+                            errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
                         }
+                    } catch (WrongLogFileFormatException exception) {
+                        errorEntities.add(generateWreckedWrongFileErrorEntity(exception.getMessage(), Error.WrongFileFormat));
                     }
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();
         }
         ParsedData parsedData = new ParsedData();
         List<ActiveObject> activeObjects = new ArrayList<>();
-        for(DeserializedActiveObject activeObject: deserializedAOs){
+        for (DeserializedActiveObject activeObject : deserializedAOs) {
             WrappedActiveObjectWithError activeObjectWithError = getActiveObjectFromDeserializedData(activeObject.getDeserializedThreadEvents());
             activeObjects.add(activeObjectWithError.getActiveObject());
             errorEntities.addAll(activeObjectWithError.getErrorEntities());
@@ -64,7 +63,8 @@ public class DataParser {
         parsedData.addAllErrorEntities(errorEntities);
         return parsedData;
     }
-    private WrappedRequestWithError readRequestFile(Path path){
+
+    private WrappedRequestWithError readRequestFile(Path path) {
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
         List<String> lines = null;
         List<ErrorEntity> errorEntities = new ArrayList<>();
@@ -73,10 +73,9 @@ public class DataParser {
             for (int i = 0; lines.size() > i; i++) {
                 String line = lines.get(i);
                 try {
-                    if(line.startsWith("deliverrequest")){
+                    if (line.startsWith("deliverrequest")) {
                         deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestDelivered));
-                    }
-                    else if (line.startsWith("beforerequestsent")){
+                    } else if (line.startsWith("beforerequestsent")) {
                         deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestSent));
                     }
                 } catch (WreckedFileException e) {
@@ -93,7 +92,8 @@ public class DataParser {
         return requestWithError;
 
     }
-    private DeserializedActiveObject readActiveObjectFile(Path path) throws WrongLogFileFormatException{
+
+    private DeserializedActiveObject readActiveObjectFile(Path path) throws WrongLogFileFormatException {
         List<DeserializedThreadEvent> deserializedLoggedDataList = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         DeserializedThreadEvent currentRequest = null;
@@ -161,11 +161,13 @@ public class DataParser {
         deserializedActiveObject.setErrorEntities(errorEntities);
         return deserializedActiveObject;
     }
-    private static ErrorEntity generateWreckedWrongFileErrorEntity(String path, Error error){
+
+    private static ErrorEntity generateWreckedWrongFileErrorEntity(String path, Error error) {
         ErrorEntity errorEntity = new ErrorEntity(error);
         errorEntity.setMessage("File name=" + path);
         return errorEntity;
     }
+
     public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedThreadEvent> dataList) {
         ActiveObject activeObject = new ActiveObject();
         List<StartedButNotFinishedEvent> startedButNotFinishedEvents = new ArrayList<>();
@@ -181,9 +183,9 @@ public class DataParser {
                 startedButNotFinishedEvents.add(new StartedButNotFinishedEvent(thread, event));
                 thread.addThreadEvent(event);
             } else if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStopped) {
-                for (StartedButNotFinishedEvent tempEvent:startedButNotFinishedEvents){
-                    if(tempEvent.getActiveObjectThread().getThreadId() == thread.getThreadId()
-                            && tempEvent.getEvent().getSequenceNumber() == event.getSequenceNumber()){
+                for (StartedButNotFinishedEvent tempEvent : startedButNotFinishedEvents) {
+                    if (tempEvent.getActiveObjectThread().getThreadId() == thread.getThreadId()
+                            && tempEvent.getEvent().getSequenceNumber() == event.getSequenceNumber()) {
                         tempEvent.getEvent().setFinishTime(deserializedLoggedData.getTimeStamp());
                         thread.updateThreadEvent(tempEvent.getEvent());
                         startedButNotFinishedEvents.remove(tempEvent);
@@ -193,7 +195,7 @@ public class DataParser {
             }
         }
         WrappedActiveObjectWithError wrappedActiveObjectWithError = new WrappedActiveObjectWithError(activeObject);
-        for (StartedButNotFinishedEvent event: startedButNotFinishedEvents){
+        for (StartedButNotFinishedEvent event : startedButNotFinishedEvents) {
             ErrorEntity errorEntity = new ErrorEntity(Error.RequestNeverEnds);
             errorEntity.setMessage("Active object id: " + activeObject.getIdentifier() + " thread id = " + event.getActiveObjectThread().getThreadId() + " thread event sequence number = " + event.getEvent().getSequenceNumber());
             wrappedActiveObjectWithError.addErrorEntity(errorEntity);
@@ -201,7 +203,7 @@ public class DataParser {
         return wrappedActiveObjectWithError;
     }
 
-    private class StartedButNotFinishedEvent{
+    private class StartedButNotFinishedEvent {
         private ActiveObjectThread activeObjectThread;
         private ThreadEvent event;
 
@@ -223,7 +225,7 @@ public class DataParser {
         }
     }
 
-    private class WrappedActiveObjectWithError{
+    private class WrappedActiveObjectWithError {
         private ActiveObject activeObject;
         List<ErrorEntity> errorEntities = new ArrayList<>();
 
@@ -235,7 +237,7 @@ public class DataParser {
             return errorEntities;
         }
 
-        public void addErrorEntity(ErrorEntity errorEntity){
+        public void addErrorEntity(ErrorEntity errorEntity) {
             errorEntities.add(errorEntity);
         }
 
@@ -244,7 +246,8 @@ public class DataParser {
             return activeObject;
         }
     }
-    private class WrappedRequestWithError{
+
+    private class WrappedRequestWithError {
         private List<DeserializedRequestData> requestData = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
 
@@ -252,12 +255,14 @@ public class DataParser {
             return errorEntities;
         }
 
-        public void addErrorEntity(ErrorEntity errorEntity){
+        public void addErrorEntity(ErrorEntity errorEntity) {
             errorEntities.add(errorEntity);
         }
-        public void addRequestData(DeserializedRequestData requestData){
+
+        public void addRequestData(DeserializedRequestData requestData) {
             this.requestData.add(requestData);
         }
+
         public List<DeserializedRequestData> getRequestData() {
             return requestData;
         }
@@ -270,7 +275,8 @@ public class DataParser {
             this.errorEntities = errorEntities;
         }
     }
-    private DeserializedRequestData parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException{
+
+    private DeserializedRequestData parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
         DeserializedRequestData requestData = new DeserializedRequestData(typeOfRequest);
         String delims = "[ ]";
         String[] properties = line.split(delims);
@@ -282,7 +288,8 @@ public class DataParser {
         requestData.setSenderIdentifier(locateOrGenerateIdentifierFromKey(properties[6]));
         return requestData;
     }
-    private String locateOrGenerateIdentifierFromKey(String key){
+
+    private String locateOrGenerateIdentifierFromKey(String key) {
         String newIdentifier;
         if (!oldAndNewAOIdsKeyValuePairs.containsKey(key)) {
             newIdentifier = AOIdentifierGenerator.generateUniqueAOIdentifier(key);

@@ -7,23 +7,28 @@ package enums;
 public enum OrderingPolicyEnum {
     ENABLED, // value = 0
     DISABLED; // value = 1
-    public static OrderingPolicyEnum getOrderingPolicyByValue(int value){
-        switch (value){
+
+    public static OrderingPolicyEnum getOrderingPolicyByValue(int value) {
+        switch (value) {
             case 0:
                 return ENABLED;
-            default: case 1:
+            default:
+            case 1:
                 return DISABLED;
         }
     }
-    public static int getValueByOrderingPolicy(OrderingPolicyEnum policyEnum){
-        switch (policyEnum){
+
+    public static int getValueByOrderingPolicy(OrderingPolicyEnum policyEnum) {
+        switch (policyEnum) {
             case DISABLED:
                 return 1;
-            default: case ENABLED:
+            default:
+            case ENABLED:
                 return 0;
         }
     }
-    public static int getDefaultValue(){
+
+    public static int getDefaultValue() {
         return 0;
     }
 

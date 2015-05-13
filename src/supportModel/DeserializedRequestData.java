@@ -70,7 +70,7 @@ public class DeserializedRequestData {
         this.threadId = threadId;
     }
 
-    public String getId(){
+    public String getId() {
         return senderIdentifier + sequenceNumber;
     }
 }

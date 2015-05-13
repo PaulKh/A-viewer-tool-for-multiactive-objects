@@ -17,7 +17,7 @@ public class ParsedData {
         return errorEntities;
     }
 
-    public void addErrorEntity(ErrorEntity errorEntity){
+    public void addErrorEntity(ErrorEntity errorEntity) {
         errorEntities.add(errorEntity);
     }
 
@@ -29,7 +29,7 @@ public class ParsedData {
         this.activeObjects = activeObjects;
     }
 
-    public void addAllErrorEntities(List<ErrorEntity> errorEntities){
+    public void addAllErrorEntities(List<ErrorEntity> errorEntities) {
         this.errorEntities.addAll(errorEntities);
         return;
     }

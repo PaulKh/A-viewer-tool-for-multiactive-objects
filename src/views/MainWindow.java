@@ -1,26 +1,30 @@
 package views;
 
-import enums.OrderingPolicyEnum;
-import enums.ViewPositionPolicyEnum;
-import supportModel.OrderStateOfActiveObjects;
-import utils.*;
-import views.builders.ErrorDialogBuilder;
 import callbacks.SwapButtonPressedListener;
 import callbacks.ThreadEventClickedCallback;
+import callbacks.UpButtonPressedCallback;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import enums.OrderingPolicyEnum;
+import enums.ViewPositionPolicyEnum;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.ErrorEntity;
+import supportModel.OrderStateOfActiveObjects;
+import utils.*;
+import views.builders.ErrorDialogBuilder;
 import views.builders.QueuesDialogBuilder;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,7 +38,7 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/16/15.
  */
-public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener {
+public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback {
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
@@ -49,8 +53,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         int returnVal = fc.showOpenDialog(MainWindow.this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             PreferencesHelper.setPathToDirectory(MainWindow.class, fc.getSelectedFile().toString());
-            System.out.println("getSelectedFile() : "
-                    + fc.getSelectedFile());
+
             directory = fc.getSelectedFile().toString();
         }
     };
@@ -92,7 +95,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
-    private void initUndoAction(){
+
+    private void initUndoAction() {
         undoReorderingButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -103,6 +107,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             }
         });
     }
+
     private void initSlider() {
         scaleLabel.setBorder(new EmptyBorder(0, 0, 0, 15));
         scaleLabel.addMouseListener(new MouseAdapter() {
@@ -284,13 +289,15 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
             }
         }
+        titlesPanel.add(buildEmptyRow(gridBagLayout, 30));
     }
 
     private void initTitlesView(JPanel titlesPanel, GridBagLayout gridBagLayout) {
         GridBagConstraints constraints;
         boolean firstLineSkipped = false;
         ActiveObject previousActiveObject = null;
-        for (ActiveObject activeObject : activeObjects) {
+        for (int counter = 0; counter < activeObjects.size(); counter++) {
+            ActiveObject activeObject = activeObjects.get(counter);
             if (!firstLineSkipped) {
                 this.swapActiveObjectsButtons.clear();
                 previousActiveObject = activeObject;
@@ -302,7 +309,10 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                     this.swapActiveObjectsButtons.add(button);
                     previousActiveObject = activeObject;
                     button.setOpaque(false);
-                    Image img = ImageIO.read(new FileInputStream("res/refresh-icon.png"));
+                    button.setBorderPainted(false);
+                    button.setContentAreaFilled(false);
+                    button.setFocusPainted(false);
+                    Image img = ImageIO.read(getClass().getResource("/refresh-icon.png"));
                     button.setIcon(new ImageIcon(img));
                     button.setMargin(new Insets(0, 0, 0, 0));
                     constraints = new GridBagConstraints();
@@ -311,11 +321,14 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                     titlesPanel.add(button);
                     titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
                 } catch (IOException ex) {
+
                 }
             }
-
-
-            ActiveObjectTitlePanel titlePanel = new ActiveObjectTitlePanel(activeObject.getIdentifier());
+            ActiveObjectTitlePanel titlePanel;
+            if (counter == 0)
+                titlePanel = new ActiveObjectTitlePanel(activeObject, null);
+            else
+                titlePanel = new ActiveObjectTitlePanel(activeObject, this);
             constraints = new GridBagConstraints();
             constraints.weightx = 0.0;
             constraints.gridwidth = 1;
@@ -332,11 +345,13 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 constraints.fill = GridBagConstraints.NONE;
                 gridBagLayout.setConstraints(threadTitlePanel, constraints);
                 titlesPanel.add(threadTitlePanel);
-                for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 2; j++) {
                     titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
                 }
             }
         }
+        titlesPanel.add(buildEmptyRow(gridBagLayout, 30));
+
     }
 
     private EmptyRow buildEmptyRow(GridBagLayout gridBagLayout, int height) {
@@ -382,15 +397,16 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     private void updateView(ViewPositionPolicyEnum positionPolicyEnum) {
+        Point position = null;
+        if (positionPolicyEnum == ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE) {
+            position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
+        }
         buildMainView();
-        Point position = ArrowHandler.instance().updateArrows(flowPanels);
-        switch (positionPolicyEnum){
-            case KEEP_ON_THE_CURRENT_PLACE:
-                position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
-                break;
-            case TO_THE_START:
-                position = new Point(position.x - 50, position.y - 50);
-                break;
+        if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START) {
+            position = ArrowHandler.instance().updateArrows(flowPanels);
+            position = new Point(position.x - 50, position.y - 50);
+        } else {
+            ArrowHandler.instance().updateArrows(flowPanels);
         }
 
         final Point finalPosition = position;
@@ -399,13 +415,17 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             mainScrollPane.getHorizontalScrollBar().setValue(finalPosition.x);
         });
     }
-// highlights events selected by user and all dependent
+
+    // highlights events selected by user and all dependent
     private void highlighThreadEvents() {
         for (ThreadFlowPanel threadFlowPanel : flowPanels) {
             threadFlowPanel.setHighlightedEvent();
         }
     }
-// reorder active objects in the way that dependent objects are situated nearby. Returns true if
+
+    // reorder active objects in the way that dependent objects are situated nearby.
+    // Returns true if reordering made, so the caller know that
+    // view must be repainted
     private boolean reorderActiveObjectsDependingOnSelected(List<ActiveObject> activeObjectList) {
         int currentPosition = -1;
         boolean swapped = false;
@@ -420,7 +440,10 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 currentPosition++;
             } else {
                 currentPosition++;
-                Collections.swap(activeObjects, currentPosition, i);
+
+                this.activeObjects.remove(activeObject);
+                this.activeObjects.add(currentPosition, activeObject);
+//                Collections.swap(activeObjects, currentPosition, i);
                 swapped = true;
             }
         }
@@ -478,5 +501,13 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
      */
     public JComponent $$$getRootComponent$$$() {
         return rootPanel;
+    }
+
+    @Override
+    public void upButtonPressed(ActiveObject activeObject) {
+        this.activeObjects.remove(activeObject);
+        this.activeObjects.add(0, activeObject);
+        updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
+        highlighThreadEvents();
     }
 }

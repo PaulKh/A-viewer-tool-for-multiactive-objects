@@ -84,7 +84,7 @@ public class ThreadEvent {
         this.senderThreadId = senderThreadId;
     }
 
-    public String getId(){
+    public String getId() {
         return senderActiveObjectId + sequenceNumber;
     }
 
@@ -92,7 +92,7 @@ public class ThreadEvent {
         return thread;
     }
 
-    public String getUniqueMethodName(){
+    public String getUniqueMethodName() {
         return methodName + "_" + localUniqueId;
     }
 }

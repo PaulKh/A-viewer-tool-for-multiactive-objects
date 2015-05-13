@@ -6,10 +6,10 @@ import java.awt.event.ComponentListener;
 /**
  * Created by pkhvoros on 4/21/15.
  */
-public class TitlesPanelComponentListener implements ComponentListener{
+public class TitlesPanelComponentListener implements ComponentListener {
     @Override
     public void componentResized(ComponentEvent e) {
-        System.out.print(e.getComponent().getWidth());
+
     }
 
     @Override

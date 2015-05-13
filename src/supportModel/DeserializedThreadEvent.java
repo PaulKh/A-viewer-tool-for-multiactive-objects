@@ -65,7 +65,7 @@ public class DeserializedThreadEvent {
         return sequenceNumber;
     }
 
-    public void parseRunnableRequest(String line) throws WreckedFileException{
+    public void parseRunnableRequest(String line) throws WreckedFileException {
         try {
             String delims = "[,]";
             String[] equations = line.split(delims);
@@ -76,8 +76,7 @@ public class DeserializedThreadEvent {
             this.sender = leftAndRightSide[leftAndRightSide.length - 1];
             leftAndRightSide = equations[2].split(delims);
             this.sequenceNumber = Long.valueOf(leftAndRightSide[leftAndRightSide.length - 1]);
-        }
-        catch (ArrayIndexOutOfBoundsException exc){
+        } catch (ArrayIndexOutOfBoundsException exc) {
             throw new WreckedFileException();
         }
     }

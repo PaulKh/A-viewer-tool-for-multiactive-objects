@@ -14,8 +14,6 @@ public class ScrollRootPanel extends JPanel {
     private int flowX;
 
 
-
-
     public ScrollRootPanel(LayoutManager layout) {
         super(layout);
     }
@@ -23,27 +21,27 @@ public class ScrollRootPanel extends JPanel {
     @Override
     public void paint(Graphics g1) {
         super.paint(g1);
-        for (Arrow arrow: ArrowHandler.instance().getArrows()){
+        for (Arrow arrow : ArrowHandler.instance().getArrows()) {
             int x1 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getRequestSentTime()) + flowX;
             int x2 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getDerivedTime()) + flowX;
             drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
         }
     }
 
-    private void drawArrowLine(Graphics g, int x1, int y1, int x2, int y2, int d, int h){
+    private void drawArrowLine(Graphics g, int x1, int y1, int x2, int y2, int d, int h) {
         Graphics2D g2D = (Graphics2D) g;
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int dx = x2 - x1, dy = y2 - y1;
-        double D = Math.sqrt(dx*dx + dy*dy);
+        double D = Math.sqrt(dx * dx + dy * dy);
         double xm = D - d, xn = xm, ym = h, yn = -h, x;
-        double sin = dy/D, cos = dx/D;
+        double sin = dy / D, cos = dx / D;
 
-        x = xm*cos - ym*sin + x1;
-        ym = xm*sin + ym*cos + y1;
+        x = xm * cos - ym * sin + x1;
+        ym = xm * sin + ym * cos + y1;
         xm = x;
 
-        x = xn*cos - yn*sin + x1;
-        yn = xn*sin + yn*cos + y1;
+        x = xn * cos - yn * sin + x1;
+        yn = xn * sin + yn * cos + y1;
         xn = x;
 
         int[] xpoints = {x2, (int) xm, (int) xn};

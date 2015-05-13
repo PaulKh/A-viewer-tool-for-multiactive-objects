@@ -5,14 +5,13 @@ import model.ThreadEvent;
 import javax.swing.table.AbstractTableModel;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 /**
  * Created by Paul on 04/05/15.
  */
-public class DeliveryQueueTableModel extends AbstractTableModel{
+public class DeliveryQueueTableModel extends AbstractTableModel {
     private List<ThreadEvent> threadEvents;
     private String[] headers = {"#", "Event identifier", "Delivered time"};
 
@@ -29,13 +28,15 @@ public class DeliveryQueueTableModel extends AbstractTableModel{
     public int getColumnCount() {
         return headers.length;
     }
+
     @Override
     public String getColumnName(int col) {
         return headers[col];
     }
+
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        switch (columnIndex){
+        switch (columnIndex) {
             case 0:
                 return rowIndex + 1;
             case 1:

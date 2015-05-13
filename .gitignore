@@ -19,4 +19,5 @@ proguard/
 *.iws
 .idea/
 
+.DS_Store
 .nfs*

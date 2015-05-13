@@ -1,5 +1,7 @@
 package views;
 
+import callbacks.UpButtonPressedCallback;
+import model.ActiveObject;
 import utils.SizeHelper;
 
 import javax.imageio.ImageIO;
@@ -12,32 +14,34 @@ import java.io.IOException;
  * Created by pkhvoros on 3/20/15.
  */
 public class ActiveObjectTitlePanel extends JPanel {
-    private String title;
+    private ActiveObject activeObject;
+    private UpButtonPressedCallback callback;
 
-    public ActiveObjectTitlePanel(String title) {
-        this.title = title;
+    public ActiveObjectTitlePanel(ActiveObject activeObject, UpButtonPressedCallback callback) {
+        this.callback = callback;
+        this.activeObject = activeObject;
         GridBagLayout gridBagLayout = new GridBagLayout();
         this.setLayout(gridBagLayout);
         GridBagConstraints constraints = new GridBagConstraints();
 
+        if (callback != null) {
+            try {
+                JButton button = new JButton();
+                button.setBorderPainted(false);
+                button.setContentAreaFilled(false);
+                button.setFocusPainted(false);
+                button.setOpaque(false);
+                button.addActionListener(e -> upButtonPressed());
+                Image img = ImageIO.read(getClass().getResource("/arrow-up.png"));
+                button.setIcon(new ImageIcon(img));
+//                constraints.gridwidth = GridBagConstraints.REMAINDER;
+//                gridBagLayout.setConstraints(button, constraints);
+                this.add(button);
+            } catch (IOException ex) {
+            }
+        }
 
-
-//        try {
-//            JButton button = new JButton();
-//            button.setBorderPainted(false);
-//            button.setContentAreaFilled(false);
-//            button.setFocusPainted(false);
-//            button.setOpaque(false);
-//            Image img = ImageIO.read(new FileInputStream("res/arrow_up.png"));
-//            button.setIcon(new ImageIcon(img));
-//            constraints.gridwidth = GridBagConstraints.REMAINDER;
-//            gridBagLayout.setConstraints(button, constraints);
-//            this.add(button);
-//        }
-//        catch (IOException ex) {
-//        }
-
-        JTextArea label = new JTextArea("Active Object: " + title);
+        JTextArea label = new JTextArea("Active Object: " + activeObject.getIdentifier());
         label.setLineWrap(true);
         label.setWrapStyleWord(true);
         label.setBackground(null);
@@ -56,6 +60,12 @@ public class ActiveObjectTitlePanel extends JPanel {
 //        }
 //        catch (IOException ex) {
 //        }
+    }
+
+    private void upButtonPressed() {
+        if (callback != null) {
+            callback.upButtonPressed(activeObject);
+        }
     }
 
     @Override

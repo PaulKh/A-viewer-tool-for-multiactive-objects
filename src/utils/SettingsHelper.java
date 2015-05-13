@@ -6,8 +6,9 @@ package utils;
 public class SettingsHelper {
 
     private static SettingsHelper settingsHelper;
-    public static SettingsHelper instance(){
-        if (settingsHelper == null){
+
+    public static SettingsHelper instance() {
+        if (settingsHelper == null) {
             settingsHelper = new SettingsHelper();
         }
         return settingsHelper;

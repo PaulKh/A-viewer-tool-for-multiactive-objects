@@ -1,30 +1,38 @@
 package views.builders;
 
-import enums.IssueType;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.ErrorEntity;
-import utils.SizeHelper;
+import utils.PreferencesHelper;
+import views.MainWindow;
 import views.renderers.QueueDialogRenderer;
 import views.table_models.DeliveryQueueTableModel;
 
 import javax.swing.*;
-import javax.swing.text.*;
 import java.awt.*;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by Paul on 30/04/15.
  */
 public class QueuesDialogBuilder {
+    private static List<Dialog> dialogs = new ArrayList<>();
+
     public static Dialog buildQueueDialog(Frame owner, ActiveObject activeObject, long timePressed) {
+        int numberOfDialogs = PreferencesHelper.getNumberOfDialogs(MainWindow.class);
+        if (numberOfDialogs == 0) {
+            return null;
+        }
 
         JDialog dialog = new JDialog(owner);
+        if (dialogs.size() >= numberOfDialogs) {
+            dialogs.get(0).dispose();
+            dialogs.remove(0);
+        }
+        dialogs.add(dialog);
         dialog.setTitle(activeObject.getIdentifier());
         dialog.setLocationByPlatform(true);
 
@@ -40,9 +48,9 @@ public class QueuesDialogBuilder {
         return dialog;
     }
 
-    private static List<ThreadEvent> getDeliveredList(ActiveObject activeObject, long timePressed){
+    private static List<ThreadEvent> getDeliveredList(ActiveObject activeObject, long timePressed) {
         List<ThreadEvent> allThreadEventsToSort = new ArrayList<>();
-        for (ActiveObjectThread thread:activeObject.getThreads()){
+        for (ActiveObjectThread thread : activeObject.getThreads()) {
             allThreadEventsToSort.addAll(thread.getEvents());
 //            for (ThreadEvent threadEvent:thread.getEvents()){
 //                if (threadEvent.getDerivedTime() > timePressed){

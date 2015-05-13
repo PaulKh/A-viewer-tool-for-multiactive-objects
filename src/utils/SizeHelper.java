@@ -6,7 +6,7 @@ package utils;
 public class SizeHelper {
     private static SizeHelper sizeHelper;
     public static int activeObjectTitleHeight = 100;
-    public static int activeObjectTitleWidth = 100;
+    public static int activeObjectTitleWidth = 130;
     public static int threadTitleWidth = 120;
     public static int threadHeight = 30;
     private long minimumTime;
@@ -14,8 +14,8 @@ public class SizeHelper {
     private int scale;
     private int length;
 
-    public static SizeHelper instance(){
-        if (sizeHelper == null){
+    public static SizeHelper instance() {
+        if (sizeHelper == null) {
             sizeHelper = new SizeHelper();
         }
         return sizeHelper;
@@ -53,7 +53,8 @@ public class SizeHelper {
         long tempTime = timeInMilliseconds - minimumTime;
         return (int) ((length * tempTime) / (maximumTime - minimumTime));
     }
-    public long convertLengthToTime(int xPosition){
+
+    public long convertLengthToTime(int xPosition) {
         return minimumTime + (xPosition * (maximumTime - minimumTime)) / length;
     }
 }

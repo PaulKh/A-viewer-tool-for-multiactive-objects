@@ -17,18 +17,22 @@ public class PreferencesHelper {
         int value = prefs.getInt(reOrderingAllowedKey, OrderingPolicyEnum.getDefaultValue());
         return OrderingPolicyEnum.getOrderingPolicyByValue(value);
     }
-    public static void saveOrderingPolicy(Class senderClass, OrderingPolicyEnum policyEnum){
+
+    public static void saveOrderingPolicy(Class senderClass, OrderingPolicyEnum policyEnum) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         prefs.putInt(reOrderingAllowedKey, OrderingPolicyEnum.getValueByOrderingPolicy(policyEnum));
     }
-    public static int getNumberOfDialogs(Class senderClass){
+
+    public static int getNumberOfDialogs(Class senderClass) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         return prefs.getInt(numberOfDialogsKey, 3);
     }
-    public static void saveNumberOfDialogs(Class senderClass, int numberOfDialogs){
+
+    public static void saveNumberOfDialogs(Class senderClass, int numberOfDialogs) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         prefs.putInt(numberOfDialogsKey, numberOfDialogs);
     }
+
     public static String getPathToDirectory(Class senderClass) {
         Preferences prefs = Preferences.userNodeForPackage(senderClass);
         return prefs.get(defaultDirectoryKey, null);

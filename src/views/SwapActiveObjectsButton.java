@@ -5,13 +5,11 @@ import model.ActiveObject;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Created by pkhvoros on 4/24/15.
  */
-public class SwapActiveObjectsButton extends JButton{
+public class SwapActiveObjectsButton extends JButton {
     private ActiveObject activeObject1;
     private ActiveObject activeObject2;
 
@@ -30,7 +28,7 @@ public class SwapActiveObjectsButton extends JButton{
     }
 
     @Override
-    public Dimension getPreferredSize(){
+    public Dimension getPreferredSize() {
         return new Dimension(30, 30);
     }
 }

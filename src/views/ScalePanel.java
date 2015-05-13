@@ -55,9 +55,10 @@ public class ScalePanel extends JPanel {
         }
     }
 
-    private int getPadding(){
+    private int getPadding() {
         return SizeHelper.threadTitleWidth + SizeHelper.activeObjectTitleWidth + 10;
     }
+
     public void updateView() {
         this.setSize(SizeHelper.instance().getLength(), 30);
 //        repaint();

@@ -35,7 +35,7 @@ public class SettingsDialog extends JDialog {
 // call onCancel() when cross is clicked
 
         numberOfDialogsTextfield.setDocument(new JTextFieldLimit(1));
-        numberOfDialogsTextfield.setText(String.valueOf(PreferencesHelper.getNumberOfDialogs(this.getClass())));
+        numberOfDialogsTextfield.setText(String.valueOf(PreferencesHelper.getNumberOfDialogs(MainWindow.class)));
         numberOfDialogsTextfield.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -62,10 +62,12 @@ public class SettingsDialog extends JDialog {
         initValues();
         setVisible(true);
     }
-    private void initValues(){
+
+    private void initValues() {
         OrderingPolicyEnum orderingPolicyEnum = PreferencesHelper.getReorderingPolicy(this.getClass());
         allowAutomaticReorderingCheckBox.setSelected(orderingPolicyEnum == OrderingPolicyEnum.ENABLED);
     }
+
     private void onOK() {
         OrderingPolicyEnum orderingPolicyEnum = allowAutomaticReorderingCheckBox.isSelected() ? OrderingPolicyEnum.ENABLED : OrderingPolicyEnum.DISABLED;
         PreferencesHelper.saveOrderingPolicy(this.getClass(), orderingPolicyEnum);

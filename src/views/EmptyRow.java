@@ -8,6 +8,7 @@ import java.awt.*;
  */
 public class EmptyRow extends JPanel {
     private int height;
+
     public EmptyRow(int height) {
         this.height = height;
         setPreferredSize(new Dimension(0, height));

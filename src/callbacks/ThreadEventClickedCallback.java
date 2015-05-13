@@ -8,5 +8,6 @@ import model.ThreadEvent;
  */
 public interface ThreadEventClickedCallback {
     public void threadEventClicked(ThreadEvent threadEvent);
+
     public void threadClicked(ActiveObject activeObject, long timeClicked);
 }
