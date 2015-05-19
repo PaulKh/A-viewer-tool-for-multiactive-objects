@@ -38,6 +38,8 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/16/15.
  */
+
+//This is the main frame of the application
 public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback {
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;

@@ -13,6 +13,7 @@ import java.util.List;
 /**
  * Created by pkhvoros on 4/2/15.
  */
+//This is the class which parses data from the given directory
 public class DataHelper {
     private DataParser dataParser;
     private List<ErrorEntity> errorEntities;
@@ -39,7 +40,8 @@ public class DataHelper {
 
         this.activeObjects = parsedData.getActiveObjects();
     }
-
+//The method updates the values of when request has been delivered, sent and who was the sender
+//In other words it is merging of two different types of logs. One about the activeobject and the other is about request delivery info.
     private void enrichThreadEvent(List<ActiveObject> activeObjects, DeserializedRequestData requestData) {
         for (ActiveObject activeObject : activeObjects) {
             for (ActiveObjectThread thread : activeObject.getThreads()) {
@@ -77,6 +79,7 @@ public class DataHelper {
         return activeObjects;
     }
 
+//This method identifies threadEvents which were called by the given thread event
     public List<ThreadEvent> getOutgoingThreadEvents(ThreadEvent threadEvent) {
         List<ThreadEvent> threadEvents = new ArrayList<>();
         for (ActiveObject activeObject : activeObjects) {

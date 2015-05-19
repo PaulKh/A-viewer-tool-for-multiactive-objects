@@ -86,7 +86,7 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
     @Override
     public void mouseMoved(MouseEvent e) {
         RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
-        System.out.print(e.getX());
+//        System.out.print(e.getX());
         if (rect != null) {
             mouseMovedRectNotNull(rect);
         } else {
