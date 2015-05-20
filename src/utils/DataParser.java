@@ -22,6 +22,7 @@ import java.util.Map;
  * Created by pkhvoros on 3/13/15.
  */
 public class DataParser {
+    //this is the mapping between activeObject ids from the program and new human readable activeObject ids
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
 
     public ParsedData parseData(String sourceDirectory) {

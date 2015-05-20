@@ -8,9 +8,13 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/25/15.
  */
+//This class represents all the information parsed from the logs
 public class ParsedData {
+    //request information
     List<DeserializedRequestData> deserializedRequestDataList;
+    //information about active objects
     List<ActiveObject> activeObjects;
+    //errors occured during the parsing
     List<ErrorEntity> errorEntities = new ArrayList<>();
 
     public List<ErrorEntity> getErrorEntities() {

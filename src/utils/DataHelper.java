@@ -41,7 +41,7 @@ public class DataHelper {
         this.activeObjects = parsedData.getActiveObjects();
     }
 //The method updates the values of when request has been delivered, sent and who was the sender
-//In other words it is merging of two different types of logs. One about the activeobject and the other is about request delivery info.
+//In other words it is the merging of two different types of logs. One about the activeobject and the other is about request delivery info.
     private void enrichThreadEvent(List<ActiveObject> activeObjects, DeserializedRequestData requestData) {
         for (ActiveObject activeObject : activeObjects) {
             for (ActiveObjectThread thread : activeObject.getThreads()) {
