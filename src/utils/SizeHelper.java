@@ -6,7 +6,7 @@ package utils;
 public class SizeHelper {
     private static SizeHelper sizeHelper;
     public static int activeObjectTitleHeight = 100;
-    public static int activeObjectTitleWidth = 130;
+    public static int activeObjectTitleWidth = 160;
     public static int threadTitleWidth = 120;
     public static int threadHeight = 30;
     private long minimumTime;

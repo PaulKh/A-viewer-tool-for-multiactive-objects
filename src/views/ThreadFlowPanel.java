@@ -4,6 +4,7 @@ import callbacks.ThreadEventClickedCallback;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.Arrow;
+import supportModel.RectangleWithThreadEvent;
 import utils.ArrowHandler;
 import utils.SizeHelper;
 
@@ -18,44 +19,22 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/19/15.
  */
-public class ThreadFlowPanel extends JPanel implements MouseMotionListener, MouseListener {
-    private List<RectangleWithThreadEvent> rectangles = new ArrayList<>();
+public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener, MouseListener {
+
     private ActiveObjectThread activeObjectThread;
     private ThreadEventClickedCallback callback;
-
     public ThreadFlowPanel(ActiveObjectThread activeObjectThread) {
         this.activeObjectThread = activeObjectThread;
-        ToolTipManager.sharedInstance().setInitialDelay(0);
         for (ThreadEvent threadEvent : activeObjectThread.getEvents())
             rectangles.add(new RectangleWithThreadEvent(threadEvent));
-        this.setBackground(Color.WHITE);
         this.addMouseMotionListener(this);
         this.addMouseListener(this);
-        updateSize();
+        init();
     }
 
-    public void updateSize() {
-        SizeHelper sizeHelper = SizeHelper.instance();
-        long totalTime = sizeHelper.getMaximumTime() - sizeHelper.getMinimumTime();
-        for (RectangleWithThreadEvent event : rectangles) {
-            long startTime = event.getThreadEvent().getStartTime() - sizeHelper.getMinimumTime();
-            long finishTime = event.getThreadEvent().getFinishTime() - sizeHelper.getMinimumTime();
-            int xPos = (int) (startTime * sizeHelper.getLength() / totalTime);
-            int length = (int) (finishTime * sizeHelper.getLength() / totalTime) - xPos;
-            if (length == 0)
-                length = 1;
-            event.setRectangle(new Rectangle(xPos, 0, length, SizeHelper.threadHeight));
-            if (finishTime <= 0)
-                event.setRectangle(new Rectangle(xPos, 0, sizeHelper.getLength() - xPos, SizeHelper.threadHeight));
-//                System.out.println("thread id = " + activeObjectThread.getThreadId() + " length = " + length + " finishTime = " + finishTime);
-        }
-        setSize(sizeHelper.getLength(), SizeHelper.threadHeight);
-    }
 
-    @Override
-    public Dimension getPreferredSize() {
-        return new Dimension(SizeHelper.instance().getLength(), SizeHelper.threadHeight);
-    }
+
+
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -71,7 +50,7 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
                 g.setColor(new Color(255, 248, 57));
             }
             g.fillRect(rect.getRectangle().x, rect.getRectangle().y, rect.getRectangle().width, rect.getRectangle().height);
-            if (rect.isHighlighted)
+            if (rect.isHighlighted())
                 drawHighlightedRectangle(g, rect.getRectangle());
 //            else{
 //               g.fillRect(rect.getRectangle().x, rect.getRectangle().y, sizeHelper.getLength() - rect.getRectangle().x, rect.getRectangle().height);
@@ -108,27 +87,17 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
         }
     }
 
-    private RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent, int delta) {
-        int mx = mouseEvent.getX();
-        int my = mouseEvent.getY();
-        for (RectangleWithThreadEvent rect : rectangles) {
-            Rectangle tempRect = new Rectangle((int) rect.getRectangle().getX() - delta, (int) rect.getRectangle().getY(), (int) rect.getRectangle().getWidth() + delta * 2, (int) rect.getRectangle().getHeight());
-            if (tempRect.contains(mx, my)) {
-                return rect;
-            }
-        }
-        return null;
-    }
+
 
     @Override
     public void mouseClicked(MouseEvent e) {
         RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
         if (rect != null && callback != null) {
-            callback.threadEventClicked(rect.threadEvent);
+            callback.threadEventClicked(rect.getThreadEvent());
         } else {
             rect = getRectangleContainingPoint(e, 5);
             if (rect != null && callback != null) {
-                callback.threadEventClicked(rect.threadEvent);
+                callback.threadEventClicked(rect.getThreadEvent());
             }
         }
         long time = SizeHelper.instance().convertLengthToTime(e.getX());
@@ -157,35 +126,6 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
 
     }
 
-    private class RectangleWithThreadEvent {
-        private boolean isHighlighted = false;
-        private Rectangle rectangle;
-        private ThreadEvent threadEvent;
-
-        public RectangleWithThreadEvent(ThreadEvent threadEvent) {
-            this.threadEvent = threadEvent;
-        }
-
-        public Rectangle getRectangle() {
-            return rectangle;
-        }
-
-        public void setRectangle(Rectangle rectangle) {
-            this.rectangle = rectangle;
-        }
-
-        public ThreadEvent getThreadEvent() {
-            return threadEvent;
-        }
-
-        public boolean isHighlighted() {
-            return isHighlighted;
-        }
-
-        public void setHighlighted(boolean isHighlighted) {
-            this.isHighlighted = isHighlighted;
-        }
-    }
 
     public ThreadEventClickedCallback getCallback() {
         return callback;
@@ -227,5 +167,22 @@ public class ThreadFlowPanel extends JPanel implements MouseMotionListener, Mous
                 }
             }
         }
+    }
+
+    @Override
+    public boolean containsThread(ActiveObjectThread thread) {
+        return thread.equals(activeObjectThread);
+    }
+
+    @Override
+    public boolean containsSourceThreadForEvent(ThreadEvent threadEvent) {
+        if (activeObjectThread.getThreadId() == threadEvent.getSenderThreadId() && activeObjectThread.getActiveObject().getIdentifier() == threadEvent.getSenderActiveObjectId())
+            return true;
+        return false;
+    }
+
+    @Override
+    public List<ThreadEvent> getAllThreadEvents() {
+        return this.activeObjectThread.getEvents();
     }
 }

@@ -1,5 +1,6 @@
 package views;
 
+import callbacks.LockerButtonCallback;
 import callbacks.UpButtonPressedCallback;
 import model.ActiveObject;
 import utils.SizeHelper;
@@ -7,7 +8,6 @@ import utils.SizeHelper;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -15,15 +15,30 @@ import java.io.IOException;
  */
 public class ActiveObjectTitlePanel extends JPanel {
     private ActiveObject activeObject;
-    private UpButtonPressedCallback callback;
+    private UpButtonPressedCallback upButtonCallback;
+    private LockerButtonCallback lockerButtonCallback;
 
-    public ActiveObjectTitlePanel(ActiveObject activeObject, UpButtonPressedCallback callback) {
-        this.callback = callback;
+    public ActiveObjectTitlePanel(ActiveObject activeObject, UpButtonPressedCallback callback, LockerButtonCallback lockerButtonCallback, boolean isLocked) {
+        this.lockerButtonCallback = lockerButtonCallback;
+        this.upButtonCallback = callback;
         this.activeObject = activeObject;
         GridBagLayout gridBagLayout = new GridBagLayout();
         this.setLayout(gridBagLayout);
         GridBagConstraints constraints = new GridBagConstraints();
-
+        try {
+            JButton button = new JButton();
+            button.setBorderPainted(false);
+            button.setContentAreaFilled(false);
+            button.setFocusPainted(false);
+            button.setOpaque(false);
+            button.setMargin(new Insets(0, 0, 0, 0));
+            button.addActionListener(e -> lockerButtonPressed());
+            String pathToImage = isLocked ? "/locked.png" : "/unlocked.png";
+            Image img = ImageIO.read(getClass().getResource(pathToImage));
+            button.setIcon(new ImageIcon(img));
+            this.add(button);
+        } catch (IOException ex) {
+        }
         if (callback != null) {
             try {
                 JButton button = new JButton();
@@ -31,6 +46,7 @@ public class ActiveObjectTitlePanel extends JPanel {
                 button.setContentAreaFilled(false);
                 button.setFocusPainted(false);
                 button.setOpaque(false);
+                button.setMargin(new Insets(0, 0, 0, 0));
                 button.addActionListener(e -> upButtonPressed());
                 Image img = ImageIO.read(getClass().getResource("/arrow-up.png"));
                 button.setIcon(new ImageIcon(img));
@@ -63,9 +79,13 @@ public class ActiveObjectTitlePanel extends JPanel {
     }
 
     private void upButtonPressed() {
-        if (callback != null) {
-            callback.upButtonPressed(activeObject);
+        if (upButtonCallback != null) {
+            upButtonCallback.upButtonPressed(activeObject);
         }
+    }
+    private void lockerButtonPressed(){
+        if (lockerButtonCallback != null)
+            lockerButtonCallback.lockerButtonPressed(activeObject);
     }
 
     @Override
@@ -73,6 +93,9 @@ public class ActiveObjectTitlePanel extends JPanel {
         return new Dimension(SizeHelper.activeObjectTitleWidth, 0);
     }
 
+    public ActiveObject getActiveObject() {
+        return activeObject;
+    }
 //    @Override
 //    protected void paintComponent(Graphics g) {
 //        super.paintComponent(g);

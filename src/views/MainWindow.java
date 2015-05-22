@@ -1,5 +1,6 @@
 package views;
 
+import callbacks.LockerButtonCallback;
 import callbacks.SwapButtonPressedListener;
 import callbacks.ThreadEventClickedCallback;
 import callbacks.UpButtonPressedCallback;
@@ -40,11 +41,12 @@ import java.util.List;
  */
 
 //This is the main frame of the application
-public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback {
+public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback, LockerButtonCallback {
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
     private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
+    private List<ActiveObject> lockedObjects = new ArrayList<>();
     ActionListener openLogFiles = e -> {
         final JFileChooser fc = new JFileChooser();
         if (directory != null && Files.exists(Paths.get(directory))) {
@@ -55,7 +57,6 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         int returnVal = fc.showOpenDialog(MainWindow.this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             PreferencesHelper.setPathToDirectory(MainWindow.class, fc.getSelectedFile().toString());
-
             directory = fc.getSelectedFile().toString();
         }
     };
@@ -83,7 +84,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private JPanel container;
     private JButton undoReorderingButton;
     private ScalePanel scalePanel;
-    private List<ThreadFlowPanel> flowPanels = new ArrayList<>();
+    private List<FlowPanel> flowPanels = new ArrayList<>();
 
     public MainWindow(String headTitle) throws HeadlessException {
         super(headTitle);
@@ -125,7 +126,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 return;
             scaleLabel.setText(scaleSlider.getValue() + " pixels/seconds");
             SizeHelper.instance().setScale(scaleSlider.getValue());
-            for (ThreadFlowPanel flowPanel : flowPanels) {
+            for (FlowPanel flowPanel : flowPanels) {
                 flowPanel.updateSize();
             }
             if (scalePanel != null) {
@@ -276,9 +277,19 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             } else {
                 titlesPanel.add(buildEmptyRow(gridBagLayout, 40));
             }
-
+            if (lockedObjects.contains(activeObject)) {
+                LockedAOFlowPanel flowPanel = new LockedAOFlowPanel(activeObject);
+                flowPanels.add(flowPanel);
+                constraints = new GridBagConstraints();
+                constraints.weightx = 0.0;
+                constraints.gridwidth = GridBagConstraints.NONE;
+                constraints.fill = GridBagConstraints.BOTH;
+                gridBagLayout.setConstraints(flowPanel, constraints);
+                titlesPanel.add(flowPanel);
+                titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
+                continue;
+            }
             for (ActiveObjectThread thread : activeObject.getThreads()) {
-
                 ThreadFlowPanel flowPanel = new ThreadFlowPanel(thread);
                 flowPanels.add(flowPanel);
                 flowPanel.setCallback(this);
@@ -327,33 +338,44 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 }
             }
             ActiveObjectTitlePanel titlePanel;
-            if (counter == 0)
-                titlePanel = new ActiveObjectTitlePanel(activeObject, null);
-            else
-                titlePanel = new ActiveObjectTitlePanel(activeObject, this);
+            UpButtonPressedCallback upButtonPressedCallback = (counter == 0) ? null : this;
+            boolean isLocked = lockedObjects.contains(activeObject);
+
+            titlePanel = new ActiveObjectTitlePanel(activeObject, upButtonPressedCallback, this, isLocked);
             constraints = new GridBagConstraints();
             constraints.weightx = 0.0;
             constraints.gridwidth = 1;
-            constraints.gridheight = activeObject.getThreads().size() * 2;
+            constraints.gridheight = isLocked ? 2 : activeObject.getThreads().size() * 2;
+
             constraints.fill = GridBagConstraints.VERTICAL;
             gridBagLayout.setConstraints(titlePanel, constraints);
             titlesPanel.add(titlePanel);
-
-            for (ActiveObjectThread thread : activeObject.getThreads()) {
-
-                ThreadTitlePanel threadTitlePanel = new ThreadTitlePanel(thread.getThreadId() + "");
-                constraints = new GridBagConstraints();
-                constraints.weightx = 0.0;
-                constraints.fill = GridBagConstraints.NONE;
-                gridBagLayout.setConstraints(threadTitlePanel, constraints);
-                titlesPanel.add(threadTitlePanel);
-                for (int j = 0; j < 2; j++) {
-                    titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
+            if (isLocked) {
+                String threadTitleIds = " ";
+                for (ActiveObjectThread thread : activeObject.getThreads()) {
+                    threadTitleIds += thread.getThreadId() + " ";
                 }
+                createThreadTitlePanel(gridBagLayout, titlesPanel, threadTitleIds);
+                continue;
+            }
+            for (ActiveObjectThread thread : activeObject.getThreads()) {
+                createThreadTitlePanel(gridBagLayout, titlesPanel, thread.getThreadId() + "");
             }
         }
         titlesPanel.add(buildEmptyRow(gridBagLayout, 30));
 
+    }
+
+    private void createThreadTitlePanel(GridBagLayout gridBagLayout, JPanel containerPanel, String title) {
+        ThreadTitlePanel threadTitlePanel = new ThreadTitlePanel(title);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.weightx = 0.0;
+        constraints.fill = GridBagConstraints.NONE;
+        gridBagLayout.setConstraints(threadTitlePanel, constraints);
+        containerPanel.add(threadTitlePanel);
+        for (int j = 0; j < 2; j++) {
+            containerPanel.add(buildEmptyRow(gridBagLayout, 10));
+        }
     }
 
     private EmptyRow buildEmptyRow(GridBagLayout gridBagLayout, int height) {
@@ -420,8 +442,9 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
     // highlights events selected by user and all dependent
     private void highlighThreadEvents() {
-        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
-            threadFlowPanel.setHighlightedEvent();
+        for (FlowPanel threadFlowPanel : flowPanels) {
+            if (threadFlowPanel instanceof ThreadFlowPanel)
+                ((ThreadFlowPanel) threadFlowPanel).setHighlightedEvent();
         }
     }
 
@@ -458,6 +481,15 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
         this.activeObjects.remove(activeObject);
         this.activeObjects.add(0, activeObject);
+        updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
+        highlighThreadEvents();
+    }
+
+    @Override
+    public void lockerButtonPressed(ActiveObject activeObject) {
+        if (lockedObjects.contains(activeObject)) {
+            lockedObjects.remove(activeObject);
+        } else lockedObjects.add(activeObject);
         updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
         highlighThreadEvents();
     }

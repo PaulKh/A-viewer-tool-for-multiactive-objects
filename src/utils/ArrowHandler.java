@@ -3,6 +3,7 @@ package utils;
 import model.ActiveObject;
 import model.ThreadEvent;
 import supportModel.Arrow;
+import views.FlowPanel;
 import views.ThreadFlowPanel;
 
 import java.awt.*;
@@ -43,7 +44,7 @@ public class ArrowHandler {
         return elementsToRemove.size() > 0;
     }
 
-    private Arrow createArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, ThreadFlowPanel sourcePanel, ThreadFlowPanel destinationPanel) {
+    private Arrow createArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, FlowPanel sourcePanel, FlowPanel destinationPanel) {
         for (Arrow arrow : arrows) {
             if (arrow.getDestinationThreadEvent() == destinationThreadEvent)
                 return null;
@@ -56,14 +57,14 @@ public class ArrowHandler {
         return new Arrow(y1, y2, sourceThreadEvent, destinationThreadEvent);
     }
 
-    private Arrow createArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, List<ThreadFlowPanel> flowPanels) {
-        ThreadFlowPanel sourcePanel = null, destinationPanel = null;
-        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
-            if (threadFlowPanel.getActiveObjectThread() == destinationThreadEvent.getThread()) {
-                destinationPanel = threadFlowPanel;
+    private Arrow createArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, List<FlowPanel> flowPanels) {
+        FlowPanel sourcePanel = null, destinationPanel = null;
+        for (FlowPanel flowPanel : flowPanels) {
+            if (flowPanel.containsThread(destinationThreadEvent.getThread())) {
+                destinationPanel = flowPanel;
             }
-            if (threadFlowPanel.getActiveObjectThread().getThreadId() == destinationThreadEvent.getSenderThreadId()) {
-                sourcePanel = threadFlowPanel;
+            if (flowPanel.containsSourceThreadForEvent(destinationThreadEvent)) {
+                sourcePanel = flowPanel;
                 if (sourceThreadEvent == null) {
                     sourceThreadEvent = getSourceEvent(destinationThreadEvent, sourcePanel);
                 }
@@ -72,7 +73,7 @@ public class ArrowHandler {
         return createArrow(sourceThreadEvent, destinationThreadEvent, sourcePanel, destinationPanel);
     }
 
-    public List<ActiveObject> addArrowsForEvent(ThreadEvent threadEvent, List<ThreadFlowPanel> flowPanels, DataHelper dataHelper) {
+    public List<ActiveObject> addArrowsForEvent(ThreadEvent threadEvent, List<FlowPanel> flowPanels, DataHelper dataHelper) {
         List<Arrow> tempArrows = new ArrayList<>();
         if (!ArrowHandler.instance().removeArrowsIfAdded(threadEvent)) {
             addArrow(tempArrows, createArrowForThreadEvent(null, threadEvent, flowPanels));
@@ -90,15 +91,15 @@ public class ArrowHandler {
             arrows1.add(arrow);
     }
 
-    private ThreadEvent getSourceEvent(ThreadEvent threadEvent, ThreadFlowPanel flowPanel) {
-        for (ThreadEvent tempThreadEvent : flowPanel.getActiveObjectThread().getEvents()) {
+    private ThreadEvent getSourceEvent(ThreadEvent threadEvent, FlowPanel flowPanel) {
+        for (ThreadEvent tempThreadEvent : flowPanel.getAllThreadEvents()) {
             if (threadEvent.getRequestSentTime() >= tempThreadEvent.getStartTime() && threadEvent.getRequestSentTime() <= tempThreadEvent.getFinishTime())
                 return tempThreadEvent;
         }
         return null;
     }
 
-    public Point updateArrows(List<ThreadFlowPanel> flowPanels) {
+    public Point updateArrows(List<FlowPanel> flowPanels) {
         long timeExecuted = Long.MAX_VALUE;
         int yPosition = Integer.MAX_VALUE;
         for (Arrow arrow : arrows) {
@@ -112,14 +113,14 @@ public class ArrowHandler {
         return new Point(SizeHelper.instance().convertTimeToLength(timeExecuted), yPosition);
     }
 
-    private void updateArrow(Arrow arrow, List<ThreadFlowPanel> flowPanels) {
-        ThreadFlowPanel sourcePanel = null, destinationPanel = null;
-        for (ThreadFlowPanel threadFlowPanel : flowPanels) {
-            if (threadFlowPanel.getActiveObjectThread() == arrow.getDestinationThreadEvent().getThread()) {
-                destinationPanel = threadFlowPanel;
+    private void updateArrow(Arrow arrow, List<FlowPanel> flowPanels) {
+        FlowPanel sourcePanel = null, destinationPanel = null;
+        for (FlowPanel flowPanel : flowPanels) {
+            if (flowPanel.containsThread(arrow.getDestinationThreadEvent().getThread())) {
+                destinationPanel = flowPanel;
             }
-            if (threadFlowPanel.getActiveObjectThread().getThreadId() == arrow.getDestinationThreadEvent().getSenderThreadId()) {
-                sourcePanel = threadFlowPanel;
+            if (flowPanel.containsSourceThreadForEvent(arrow.getDestinationThreadEvent())) {
+                sourcePanel = flowPanel;
             }
         }
         int y1 = 0;
