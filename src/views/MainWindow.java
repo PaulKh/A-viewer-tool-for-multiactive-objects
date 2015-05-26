@@ -12,6 +12,7 @@ import enums.ViewPositionPolicyEnum;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
+import supportModel.Arrow;
 import supportModel.ErrorEntity;
 import supportModel.OrderStateOfActiveObjects;
 import utils.*;
@@ -27,7 +28,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,28 +47,24 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private String directory;
     private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
     private List<ActiveObject> lockedObjects = new ArrayList<>();
-    ActionListener openLogFiles = e -> {
-        final JFileChooser fc = new JFileChooser();
-        if (directory != null && Files.exists(Paths.get(directory))) {
-            fc.setCurrentDirectory(new File(directory));
-        }
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        fc.setAcceptAllFileFilterUsed(false);
-        int returnVal = fc.showOpenDialog(MainWindow.this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            PreferencesHelper.setPathToDirectory(MainWindow.class, fc.getSelectedFile().toString());
-            directory = fc.getSelectedFile().toString();
-        }
-    };
 
     //views
-    private JButton selectLogFilesButton;
+    private JTextField selectLogFilesTextField;
     private JPanel rootPanel;
     private JButton parseButton;
+    private JButton openLogFilesButton;
     private JPanel activeObjectsRoot;
     private JScrollPane mainScrollPane;
     private ScrollRootPanel scrollPaneRoot;
     private List<SwapActiveObjectsButton> swapActiveObjectsButtons = new ArrayList<>();
+
+    private JSlider scaleSlider;
+    private JLabel scaleLabel;
+    private JPanel container;
+    private JButton undoReorderingButton;
+    private ScalePanel scalePanel;
+    private List<FlowPanel> flowPanels = new ArrayList<>();
+
     ActionListener parseLogsAndBuildTree = e -> {
         ArrowHandler.instance().clearAll();
         dataHelper = new DataHelper(directory);
@@ -79,16 +75,25 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         discoverMinimumAndMaximum();
         buildMainView();
     };
-    private JSlider scaleSlider;
-    private JLabel scaleLabel;
-    private JPanel container;
-    private JButton undoReorderingButton;
-    private ScalePanel scalePanel;
-    private List<FlowPanel> flowPanels = new ArrayList<>();
+
+    ActionListener openLogFiles = e -> {
+        final JFileChooser fc = new JFileChooser();
+        if (directory != null && Files.exists(Paths.get(directory))) {
+            fc.setCurrentDirectory(new File(directory));
+        }
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fc.setAcceptAllFileFilterUsed(false);
+        int returnVal = fc.showOpenDialog(MainWindow.this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            PreferencesHelper.setPathToDirectory(fc.getSelectedFile().toString());
+            directory = fc.getSelectedFile().toString();
+            parseButton.setEnabled(true);
+        }
+    };
 
     public MainWindow(String headTitle) throws HeadlessException {
         super(headTitle);
-        directory = PreferencesHelper.getPathToDirectory(MainWindow.class);
+        directory = PreferencesHelper.getPathToDirectory();
         setContentPane(rootPanel);
         setJMenuBar(createMenuBar());
         assignActionsToButtons();
@@ -141,21 +146,21 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private void labelPressed() {
         JFrame frame = new JFrame();
         Object result = JOptionPane.showInputDialog(frame, "Scale should be between " + scaleSlider.getMinimum() + " and " + scaleSlider.getMaximum() + " pixels per second");
-        if (result != null && result.toString().matches("^-?\\d+$")) {
-            if (Integer.valueOf(result.toString()) >= scaleSlider.getMinimum() && Integer.valueOf(result.toString()) <= scaleSlider.getMaximum()) {
-                scaleSlider.setValue(Integer.valueOf(result.toString()));
-                scaleLabel.setText(result.toString() + " pixels/second");
+        if (result != null) {
+            if (result.toString().matches("^-?\\d+$")) {
+                if (Integer.valueOf(result.toString()) >= scaleSlider.getMinimum() && Integer.valueOf(result.toString()) <= scaleSlider.getMaximum()) {
+                    scaleSlider.setValue(Integer.valueOf(result.toString()));
+                    scaleLabel.setText(result.toString() + " pixels/second");
+                }
             } else
                 labelPressed();
-        } else {
-            labelPressed();
         }
     }
 
     private void assignActionsToButtons() {
         if (directory != null)
             parseButton.setEnabled(true);
-        selectLogFilesButton.addActionListener(openLogFiles);
+        openLogFilesButton.addActionListener(openLogFiles);
         parseButton.addActionListener(parseLogsAndBuildTree);
     }
 
@@ -393,16 +398,19 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
     @Override
     public void threadEventClicked(ThreadEvent threadEvent) {
-        List<ActiveObject> activeObjectList = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels, dataHelper);
-        if (PreferencesHelper.getReorderingPolicy(this.getClass()) == OrderingPolicyEnum.ENABLED) {
+        List<Arrow> arrowsAdded = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels, dataHelper);
+        List<ActiveObject> activeObjectsInvolved = ArrowHandler.instance().getAllActiveObjectsFromArrows(arrowsAdded);
+        if (PreferencesHelper.getReorderingPolicy() == OrderingPolicyEnum.ENABLED && arrowsAdded.size() != 0) {
             OrderStateOfActiveObjects state = undoQueue.generateStateByActiveObjects(activeObjects);
-            if (reorderActiveObjectsDependingOnSelected(activeObjectList)) {
-                updateView(ViewPositionPolicyEnum.TO_THE_START);
+            if (reorderActiveObjectsDependingOnSelected(activeObjectsInvolved)) {
+                updateView(ViewPositionPolicyEnum.TO_THE_START, arrowsAdded);
                 undoQueue.addState(state);
                 undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
             }
+            moveViewToTheStart(arrowsAdded);
         }
         highlighThreadEvents();
+        scrollPaneRoot.revalidate();
         scrollPaneRoot.repaint();
     }
 
@@ -421,22 +429,30 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     private void updateView(ViewPositionPolicyEnum positionPolicyEnum) {
-        Point position = null;
-        if (positionPolicyEnum == ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE) {
-            position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
-        }
-        buildMainView();
-        if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START) {
-            position = ArrowHandler.instance().updateArrows(flowPanels);
-            position = new Point(position.x - 50, position.y - 50);
-        } else {
-            ArrowHandler.instance().updateArrows(flowPanels);
-        }
+        updateView(positionPolicyEnum, null);
+    }
 
-        final Point finalPosition = position;
+    private void updateView(ViewPositionPolicyEnum positionPolicyEnum, List<Arrow> arrowsAdded) {
+        Point position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
+        buildMainView();
+        ArrowHandler.instance().updateArrows(flowPanels);
+        if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START && arrowsAdded != null) {
+            position = ArrowHandler.instance().getMostLeftAndTopPositionForArrows(arrowsAdded);
+            position = new Point(position.x - 50, position.y - 50);
+        }
+        moveViewToPosition(position);
+    }
+
+    private void moveViewToTheStart(List<Arrow> arrowsAdded) {
+        Point position = ArrowHandler.instance().getMostLeftAndTopPositionForArrows(arrowsAdded);
+        position = new Point(position.x - 50, position.y - 50);
+        moveViewToPosition(position);
+    }
+
+    private void moveViewToPosition(Point position) {
         SwingUtilities.invokeLater(() -> {
-            mainScrollPane.getVerticalScrollBar().setValue(finalPosition.y);
-            mainScrollPane.getHorizontalScrollBar().setValue(finalPosition.x);
+            mainScrollPane.getVerticalScrollBar().setValue(position.y);
+            mainScrollPane.getHorizontalScrollBar().setValue(position.x);
         });
     }
 
@@ -512,17 +528,26 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         rootPanel = new JPanel();
         rootPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
         rootPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
-        selectLogFilesButton = new JButton();
-        selectLogFilesButton.setText("Select log folder");
-        panel1.add(selectLogFilesButton, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer1 = new Spacer();
-        panel1.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel1.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         parseButton = new JButton();
         parseButton.setEnabled(false);
         parseButton.setText("Parse logs and build execution tree");
-        panel1.add(parseButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel1.add(parseButton, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        selectLogFilesTextField = new JTextField();
+        selectLogFilesTextField.setEditable(false);
+        selectLogFilesTextField.setEnabled(true);
+        selectLogFilesTextField.setMargin(new Insets(0, 0, 0, 0));
+        selectLogFilesTextField.setText("");
+        panel1.add(selectLogFilesTextField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        openLogFilesButton = new JButton();
+        openLogFilesButton.setActionCommand("");
+        openLogFilesButton.setLabel("...");
+        openLogFilesButton.setMargin(new Insets(2, 0, 2, 0));
+        openLogFilesButton.setText("...");
+        panel1.add(openLogFilesButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         activeObjectsRoot = new JPanel();
         activeObjectsRoot.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
         rootPanel.add(activeObjectsRoot, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));

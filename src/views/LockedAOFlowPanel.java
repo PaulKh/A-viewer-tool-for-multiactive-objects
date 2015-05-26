@@ -4,9 +4,11 @@ import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.RectangleWithThreadEvent;
+import utils.SizeHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.*;
@@ -23,9 +25,30 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
             for (ThreadEvent threadEvent : activeObjectThread.getEvents())
                 rectangles.add(new RectangleWithThreadEvent(threadEvent));
         this.addMouseMotionListener(this);
+        initMouseClickListener();
         init();
     }
-
+    private void initMouseClickListener(){
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
+                if (rect != null && callback != null) {
+                    callback.threadEventClicked(rect.getThreadEvent());
+                } else {
+                    rect = getRectangleContainingPoint(e, 5);
+                    if (rect != null && callback != null) {
+                        callback.threadEventClicked(rect.getThreadEvent());
+                    }
+                }
+                long time = SizeHelper.instance().convertLengthToTime(e.getX());
+                if (callback != null) {
+                    callback.threadClicked(activeObject, time);
+                }
+            }
+        });
+    }
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

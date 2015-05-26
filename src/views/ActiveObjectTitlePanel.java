@@ -61,6 +61,7 @@ public class ActiveObjectTitlePanel extends JPanel {
         label.setLineWrap(true);
         label.setWrapStyleWord(true);
         label.setBackground(null);
+        label.setEditable(false);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridwidth = GridBagConstraints.REMAINDER;
         gridBagLayout.setConstraints(label, constraints);

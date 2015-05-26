@@ -23,6 +23,7 @@ public class ThreadTitlePanel extends JPanel {
         label.setLineWrap(true);
         label.setBackground(null);
         label.setWrapStyleWord(true);
+        label.setEditable(false);
         gridBagLayout.setConstraints(label, constraints);
         this.add(label);
     }

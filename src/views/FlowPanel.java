@@ -1,5 +1,6 @@
 package views;
 
+import callbacks.ThreadEventClickedCallback;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.RectangleWithThreadEvent;
@@ -17,7 +18,9 @@ import java.util.List;
  * Created by pkhvoros on 5/21/15.
  */
 public abstract class FlowPanel extends JPanel{
+    protected ThreadEventClickedCallback callback;
     protected List<RectangleWithThreadEvent> rectangles = new ArrayList<>();
+
     protected void init() {
         ToolTipManager.sharedInstance().setInitialDelay(0);
         this.setBackground(Color.WHITE);

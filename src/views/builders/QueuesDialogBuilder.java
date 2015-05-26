@@ -22,7 +22,7 @@ public class QueuesDialogBuilder {
     private static List<Dialog> dialogs = new ArrayList<>();
 
     public static Dialog buildQueueDialog(Frame owner, ActiveObject activeObject, long timePressed) {
-        int numberOfDialogs = PreferencesHelper.getNumberOfDialogs(MainWindow.class);
+        int numberOfDialogs = PreferencesHelper.getNumberOfDialogs();
         if (numberOfDialogs == 0) {
             return null;
         }

@@ -10,6 +10,7 @@ import utils.SizeHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -19,19 +20,39 @@ import java.util.List;
 /**
  * Created by pkhvoros on 3/19/15.
  */
-public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener, MouseListener {
+public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener{
 
     private ActiveObjectThread activeObjectThread;
-    private ThreadEventClickedCallback callback;
+
     public ThreadFlowPanel(ActiveObjectThread activeObjectThread) {
         this.activeObjectThread = activeObjectThread;
         for (ThreadEvent threadEvent : activeObjectThread.getEvents())
             rectangles.add(new RectangleWithThreadEvent(threadEvent));
         this.addMouseMotionListener(this);
-        this.addMouseListener(this);
+        initMouseClickListener();
         init();
     }
-
+    private void initMouseClickListener(){
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
+                if (rect != null && callback != null) {
+                    callback.threadEventClicked(rect.getThreadEvent());
+                } else {
+                    rect = getRectangleContainingPoint(e, 5);
+                    if (rect != null && callback != null) {
+                        callback.threadEventClicked(rect.getThreadEvent());
+                    }
+                }
+                long time = SizeHelper.instance().convertLengthToTime(e.getX());
+                if (callback != null) {
+                    callback.threadClicked(activeObjectThread.getActiveObject(), time);
+                }
+            }
+        });
+    }
 
 
 
@@ -86,46 +107,6 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener, M
             setToolTipText("<html>Caller:" + rect.getThreadEvent().getSenderActiveObjectId() + "<br>Method:" + rect.getThreadEvent().getUniqueMethodName() + "<br>Duration:" + duration + " sec</html>");
         }
     }
-
-
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
-        if (rect != null && callback != null) {
-            callback.threadEventClicked(rect.getThreadEvent());
-        } else {
-            rect = getRectangleContainingPoint(e, 5);
-            if (rect != null && callback != null) {
-                callback.threadEventClicked(rect.getThreadEvent());
-            }
-        }
-        long time = SizeHelper.instance().convertLengthToTime(e.getX());
-        if (callback != null) {
-            callback.threadClicked(activeObjectThread.getActiveObject(), time);
-        }
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
-
 
     public ThreadEventClickedCallback getCallback() {
         return callback;

@@ -73,7 +73,7 @@ public class ArrowHandler {
         return createArrow(sourceThreadEvent, destinationThreadEvent, sourcePanel, destinationPanel);
     }
 
-    public List<ActiveObject> addArrowsForEvent(ThreadEvent threadEvent, List<FlowPanel> flowPanels, DataHelper dataHelper) {
+    public List<Arrow> addArrowsForEvent(ThreadEvent threadEvent, List<FlowPanel> flowPanels, DataHelper dataHelper) {
         List<Arrow> tempArrows = new ArrayList<>();
         if (!ArrowHandler.instance().removeArrowsIfAdded(threadEvent)) {
             addArrow(tempArrows, createArrowForThreadEvent(null, threadEvent, flowPanels));
@@ -83,7 +83,7 @@ public class ArrowHandler {
             }
         }
         this.arrows.addAll(tempArrows);
-        return getAllActiveObjectsFromArrows(tempArrows);
+        return tempArrows;
     }
 
     private void addArrow(List<Arrow> arrows1, Arrow arrow) {
@@ -99,17 +99,20 @@ public class ArrowHandler {
         return null;
     }
 
-    public Point updateArrows(List<FlowPanel> flowPanels) {
+    public void updateArrows(List<FlowPanel> flowPanels) {
+        for (Arrow arrow : arrows) {
+            updateArrow(arrow, flowPanels);
+        }
+    }
+    public Point getMostLeftAndTopPositionForArrows(List<Arrow> arrows){
         long timeExecuted = Long.MAX_VALUE;
         int yPosition = Integer.MAX_VALUE;
         for (Arrow arrow : arrows) {
-            updateArrow(arrow, flowPanels);
             if (arrow.getDestinationThreadEvent().getRequestSentTime() < timeExecuted) {
                 timeExecuted = arrow.getDestinationThreadEvent().getRequestSentTime();
                 yPosition = Math.min(arrow.getY1(), arrow.getY2());
             }
         }
-
         return new Point(SizeHelper.instance().convertTimeToLength(timeExecuted), yPosition);
     }
 
@@ -132,7 +135,7 @@ public class ArrowHandler {
         arrow.setY2(y2);
     }
 
-    private List<ActiveObject> getAllActiveObjectsFromArrows(List<Arrow> arrowList) {
+    public List<ActiveObject> getAllActiveObjectsFromArrows(List<Arrow> arrowList) {
         List<ActiveObject> activeObjects = new ArrayList<>();
         for (Arrow arrow : arrowList) {
             ActiveObject sourceActiveObject = null;
