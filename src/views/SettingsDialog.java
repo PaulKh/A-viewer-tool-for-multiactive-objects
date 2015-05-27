@@ -58,12 +58,12 @@ public class SettingsDialog extends JDialog {
         });
         enableDialogCheckBox.addActionListener(e -> {
             if (!enableDialogCheckBox.isSelected()) {
-                if (numberOfDialogs == 0) {
-                    numberOfDialogsTextfield.setText(3 + "");
-                }
                 numberOfDialogsTextfield.setVisible(false);
                 numberOfDialogsLabel.setVisible(false);
             } else {
+                if (Integer.valueOf(numberOfDialogsTextfield.getText()) == 0) {
+                    numberOfDialogsTextfield.setText(3 + "");
+                }
                 numberOfDialogsTextfield.setVisible(true);
                 numberOfDialogsLabel.setVisible(true);
             }

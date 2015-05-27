@@ -52,7 +52,6 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private JTextField selectLogFilesTextField;
     private JPanel rootPanel;
     private JButton parseButton;
-    private JButton openLogFilesButton;
     private JPanel activeObjectsRoot;
     private JScrollPane mainScrollPane;
     private ScrollRootPanel scrollPaneRoot;
@@ -62,8 +61,9 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private JLabel scaleLabel;
     private JPanel container;
     private JButton undoReorderingButton;
+    private JButton clearButton;
     private ScalePanel scalePanel;
-    private List<FlowPanel> flowPanels = new ArrayList<>();
+    private List<FlowPanel> flowPanels;
 
     ActionListener parseLogsAndBuildTree = e -> {
         ArrowHandler.instance().clearAll();
@@ -76,7 +76,14 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         buildMainView();
     };
 
-    ActionListener openLogFiles = e -> {
+    MouseAdapter openLogFiles = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+            openLogFiles();
+        }
+    };
+    private void openLogFiles(){
         final JFileChooser fc = new JFileChooser();
         if (directory != null && Files.exists(Paths.get(directory))) {
             fc.setCurrentDirectory(new File(directory));
@@ -85,15 +92,18 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         fc.setAcceptAllFileFilterUsed(false);
         int returnVal = fc.showOpenDialog(MainWindow.this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            PreferencesHelper.setPathToDirectory(fc.getSelectedFile().toString());
-            directory = fc.getSelectedFile().toString();
-            parseButton.setEnabled(true);
+            setDirectory(fc.getSelectedFile().toString());
+            PreferencesHelper.setPathToDirectory(directory);
         }
     };
-
+    private void setDirectory(String directory){
+        this.directory = directory;
+        selectLogFilesTextField.setText(directory);
+        parseButton.setEnabled(true);
+    }
     public MainWindow(String headTitle) throws HeadlessException {
         super(headTitle);
-        directory = PreferencesHelper.getPathToDirectory();
+        setDirectory(PreferencesHelper.getPathToDirectory());
         setContentPane(rootPanel);
         setJMenuBar(createMenuBar());
         assignActionsToButtons();
@@ -105,14 +115,11 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     private void initUndoAction() {
-        undoReorderingButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                activeObjects = undoQueue.undo(activeObjects);
-                undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
-                updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
-                highlighThreadEvents();
-            }
+        undoReorderingButton.addActionListener(e -> {
+            activeObjects = undoQueue.undo(activeObjects);
+            undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+            updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
+            highlighThreadEvents();
         });
     }
 
@@ -160,70 +167,66 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private void assignActionsToButtons() {
         if (directory != null)
             parseButton.setEnabled(true);
-        openLogFilesButton.addActionListener(openLogFiles);
+        selectLogFilesTextField.addMouseListener(openLogFiles);
         parseButton.addActionListener(parseLogsAndBuildTree);
+        clearButton.addActionListener(e -> {
+            ArrowHandler.instance().clearAll();
+            for (FlowPanel flowPanel:flowPanels){
+                if (flowPanel instanceof ThreadFlowPanel)
+                    flowPanel.deHighlightAllTheRectangles();
+            }
+            clearButton.setEnabled(false);
+            repaint();
+        });
     }
-
+    private void updateClearButton(){
+        if (ArrowHandler.instance().getArrows().size() == 0){
+            clearButton.setEnabled(false);
+        }
+        else clearButton.setEnabled(true);
+    }
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
         JMenu fileMenu = new JMenu("File");
+        JMenu helpMenu = new JMenu("?");
         menuBar.add(fileMenu);
+        menuBar.add(helpMenu);
 
         JMenuItem openAction = new JMenuItem("Open");
         JMenuItem preferencesAction = new JMenuItem("Preferences");
         JMenuItem exitAction = new JMenuItem("Exit");
+        JMenuItem helpAction = new JMenuItem("Help");
         fileMenu.add(openAction);
         fileMenu.add(preferencesAction);
         fileMenu.add(exitAction);
+        helpMenu.add(helpAction);
 
-        openAction.addActionListener(openLogFiles);
-        exitAction.addActionListener(e -> System.exit(0));
-        preferencesAction.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SettingsDialog settingsDialog = new SettingsDialog();
-
-            }
+        openAction.addActionListener(e -> {
+            openLogFiles();
         });
-
-//        JMenu editMenu = new JMenu("Edit");
-//        menuBar.add(editMenu);
-//        JMenuItem scaleAction = new JMenuItem("Change scale max/min values");
-//        editMenu.add(scaleAction);
-//
-//        scaleAction.addActionListener(e -> {
-//            JTextField minimumValue = new JTextField();
-//            JTextField maximumValue = new JTextField();
-//            final JComponent[] inputs = new JComponent[]{
-//                    new JLabel("Minimum value"),
-//                    minimumValue,
-//                    new JLabel("Maximum value"),
-//                    maximumValue,
-//            };
-//            JOptionPane.showMessageDialog(null, inputs, "My custom dialog", JOptionPane.PLAIN_MESSAGE);
-//
-//        });
-
+        exitAction.addActionListener(e -> System.exit(0));
+        preferencesAction.addActionListener(e -> {
+            SettingsDialog settingsDialog = new SettingsDialog();
+        });
+        helpAction.addActionListener(e -> showHelpMenu());
         return menuBar;
     }
-
-    private void discoverMinimumAndMaximum() {
-        long minimumTime = Long.MAX_VALUE;
-        long maximumTime = 0;
-        for (ActiveObject activeObject : activeObjects) {
-            for (ActiveObjectThread thread : activeObject.getThreads()) {
-                for (ThreadEvent threadEvent : thread.getEvents()) {
-                    if (threadEvent.getStartTime() < minimumTime) {
-                        minimumTime = threadEvent.getStartTime();
-                    }
-                    if (threadEvent.getFinishTime() > maximumTime) {
-                        maximumTime = threadEvent.getFinishTime();
-                    }
-                }
-            }
+    private void showHelpMenu(){
+        JEditorPane editorPane = null;
+        try {
+            editorPane = new JEditorPane(getClass().getResource("/documentation.html"));
+            editorPane.setContentType("text/html");
+            editorPane.setEditable(false);
+            editorPane.setPreferredSize(new Dimension(600, 300));
+            JScrollPane scrollPane = new JScrollPane(editorPane);
+            JOptionPane.showMessageDialog(this, scrollPane);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        SizeHelper.instance().init(minimumTime, maximumTime, scaleSlider.getValue());
+    }
+    private void discoverMinimumAndMaximum() {
+        SizeHelper.instance().setMaxMinScale(activeObjects, scaleSlider.getValue());
     }
 
     private void buildMainView() {
@@ -238,11 +241,11 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
         GridBagLayout mainGridBagLayout = new GridBagLayout();
         scrollPaneRoot = new ScrollRootPanel(mainGridBagLayout);
-        mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         titleScrollPane.getVerticalScrollBar().setModel(mainScrollPane.getVerticalScrollBar().getModel());
 
         scalePanel = new ScalePanel();
-        JScrollPane scaleScrollPane = new JScrollPane(scalePanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JScrollPane scaleScrollPane = new JScrollPane(scalePanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scaleScrollPane.getHorizontalScrollBar().setModel(mainScrollPane.getHorizontalScrollBar().getModel());
 
         initScalePanel();
@@ -275,6 +278,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     private void initFlowsPanel(JPanel titlesPanel, GridBagLayout gridBagLayout) {
         GridBagConstraints constraints = new GridBagConstraints();
         boolean firstLineSkipped = false;
+        flowPanels = new ArrayList<>();
         for (ActiveObject activeObject : activeObjects) {
             if (!firstLineSkipped) {
                 titlesPanel.add(buildEmptyRow(gridBagLayout, 10));
@@ -410,6 +414,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             moveViewToTheStart(arrowsAdded);
         }
         highlighThreadEvents();
+        updateClearButton();
         scrollPaneRoot.revalidate();
         scrollPaneRoot.repaint();
     }
@@ -542,12 +547,6 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         selectLogFilesTextField.setMargin(new Insets(0, 0, 0, 0));
         selectLogFilesTextField.setText("");
         panel1.add(selectLogFilesTextField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        openLogFilesButton = new JButton();
-        openLogFilesButton.setActionCommand("");
-        openLogFilesButton.setLabel("...");
-        openLogFilesButton.setMargin(new Insets(2, 0, 2, 0));
-        openLogFilesButton.setText("...");
-        panel1.add(openLogFilesButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         activeObjectsRoot = new JPanel();
         activeObjectsRoot.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
         rootPanel.add(activeObjectsRoot, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));

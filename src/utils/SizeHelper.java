@@ -1,5 +1,11 @@
 package utils;
 
+import model.ActiveObject;
+import model.ActiveObjectThread;
+import model.ThreadEvent;
+
+import java.util.List;
+
 /**
  * Created by pkhvoros on 3/19/15.
  */
@@ -21,9 +27,23 @@ public class SizeHelper {
         return sizeHelper;
     }
 
-    public void init(long minimumTime, long maximumTime, int scale) {
-        this.minimumTime = minimumTime;
-        this.maximumTime = maximumTime;
+    public void setMaxMinScale(List<ActiveObject> activeObjects, int scale) {
+        long tempMinimumTime = Long.MAX_VALUE;
+        long tempMaximumTime = 0;
+        for (ActiveObject activeObject : activeObjects) {
+            for (ActiveObjectThread thread : activeObject.getThreads()) {
+                for (ThreadEvent threadEvent : thread.getEvents()) {
+                    if (threadEvent.getStartTime() < tempMinimumTime) {
+                        tempMinimumTime = threadEvent.getStartTime();
+                    }
+                    if (threadEvent.getFinishTime() > tempMaximumTime) {
+                        tempMaximumTime = threadEvent.getFinishTime();
+                    }
+                }
+            }
+        }
+        this.minimumTime = tempMinimumTime;
+        this.maximumTime = tempMaximumTime;
         this.scale = scale;
         length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
@@ -56,5 +76,12 @@ public class SizeHelper {
 
     public long convertLengthToTime(int xPosition) {
         return minimumTime + (xPosition * (maximumTime - minimumTime)) / length;
+    }
+    public int getTotalLength(){
+        //third item in summation is padding on the right side
+        return length + getLeftPadding() + 50;
+    }
+    public int getLeftPadding(){
+        return activeObjectTitleWidth + threadTitleWidth;
     }
 }
