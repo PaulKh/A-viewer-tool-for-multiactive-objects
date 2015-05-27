@@ -1,0 +1,83 @@
+<p>
+    The window of the application contains a main view and a menu bar. Before building the view source folder should be selected which can be done in two ways:
+    <br/>
+    by pressing “Select log folder” button or through menu File Þ Open.
+    <br/>
+    <br/>
+    By clicking “Parse logs and build execution tree” files from selected log folder parsed and visualized on the main view. The folder can contain subfolders
+    or other files not associated with logs and later they will be ignored. If there are some issues dialog will be displayed. Error documentation will be
+    added later.
+</p>
+<p>
+    At the bottom of the screen there is a scale panel, which allows user to check precisely what happens on a bigger scale.
+</p>
+<p>
+    After successful parsing and visualization of the content of logs the main view divides into two parts. The left part contains titles of active objects and
+    threads. Titles of active objects are unique identifiers built of the name of the class and the unique number. There is also a swap button between each two
+    neighbor active objects, which swaps positions of two active objects. Up button near the title moves the active object at the top of the list.
+</p>
+<p>
+    On the right there is presented a workflow of the application each colored rectangle corresponds to a request call to an active object. Two colors used to
+    be able to easily distinguish two adjacent requests. White color means that the thread was idle at the moment.
+</p>
+<p>
+    Popup view appears with the name of the caller active object, the identifier of request (method name + unique number), and execution time. It will appear
+    in the following cases:
+</p>
+<ul>
+    <li>
+        the mouse pointer overlaps the request
+    </li>
+</ul>
+<p>
+    · mouse pointer is not pointing on any active object event but it points on an area close to an event. In this case popup view will be shown. (To make it
+    easier to get this information for fast events, which are represented with 1-2pixels width even on a huge scale)
+</p>
+<p>
+    Click on a thread flow area will cause a set of changes:
+</p>
+<ul>
+    <li>
+        Reordering.
+        <br/>
+        Active objects will be reordered in the case such feature allowed in preferences. Object containing selected event, caller active objects and all
+        active objects called by selected event will be grouped in a single place. Focus of the view moved to the starting point.
+    </li>
+    <li>
+        Highlighting.
+        <br/>
+        Selected event will be highlighted as well as calling event and all events which were triggered by selected events.
+    </li>
+    <li>
+        Delivery queue.
+        <br/>
+        Dialog window with delivery queue will be shown. More information
+        <br/>
+        about this dialog will be presented later.
+    </li>
+</ul>
+        Dialog with delivery request queue appears on a screen in the case user clicks any thread of any active object. List is sorted by the delivery time to the
+        queue. Depending on a selected time each row represents an event and it is colored in a way based on the following rules:
+<ul>
+    <li>
+        Red colored row means that event already has been executed, <em>serveStopped</em> method called.
+    </li>
+    <li>
+        Green colored row means that event has been started but not yet finished, the event is in progress of the execution.
+    </li>
+    <li>
+        Cyan colored row means that event is in the queue but not yet started. It is waiting for being executed.
+    </li>
+    <li>
+        White events are not yet delivered to queue.
+    </li>
+</ul>
+<p>
+    Undo button at the button cancels last reordering, no matter what kind of reordering was made swapping, moving to the top or reordering after clicking an
+    event. Queue can contain up to 40 undo states.
+</p>
+<p>
+    In preferences window there is a checkbox disabling/enabling reordering of the active objects. This checkbox influences just automated reorder and doesn’t
+    influence “swap button” and “move to top” buttons. Number of allowed dialogs of delivery queue dialogs can be changed, 0 value means that delivery queue
+    won’t be shown.
+</p>

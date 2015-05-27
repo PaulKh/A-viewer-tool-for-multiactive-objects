@@ -28,7 +28,7 @@ public abstract class FlowPanel extends JPanel{
     }
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(SizeHelper.instance().getLength(), SizeHelper.threadHeight);
+        return new Dimension(SizeHelper.instance().getTotalLength(), SizeHelper.threadHeight);
     }
     public void updateSize() {
         SizeHelper sizeHelper = SizeHelper.instance();
@@ -45,7 +45,7 @@ public abstract class FlowPanel extends JPanel{
                 event.setRectangle(new Rectangle(xPos, 0, sizeHelper.getLength() - xPos, SizeHelper.threadHeight));
 //                System.out.println("thread id = " + activeObjectThread.getThreadId() + " length = " + length + " finishTime = " + finishTime);
         }
-        setSize(sizeHelper.getLength(), SizeHelper.threadHeight);
+        setSize(sizeHelper.getTotalLength(), SizeHelper.threadHeight);
     }
     protected RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent, int delta) {
         int mx = mouseEvent.getX();
@@ -61,4 +61,9 @@ public abstract class FlowPanel extends JPanel{
     public abstract boolean containsThread(ActiveObjectThread thread);
     public abstract boolean containsSourceThreadForEvent(ThreadEvent threadEvent);
     public abstract List<ThreadEvent> getAllThreadEvents();
+    public void deHighlightAllTheRectangles(){
+        for (RectangleWithThreadEvent rect: rectangles){
+            rect.setHighlighted(false);
+        }
+    }
 }

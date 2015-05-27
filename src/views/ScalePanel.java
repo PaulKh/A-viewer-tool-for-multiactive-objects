@@ -37,36 +37,33 @@ public class ScalePanel extends JPanel {
 //        for (TuplePositionTime tuplePositionTime : horizontalPoints) {
 //            g.fillRect(SizeHelper.threadTitleWidth + tuplePositionTime.getPosition(), 0, 2, 8);
 //        }
-        g.fillRect(getPadding(), 8, SizeHelper.instance().getLength(), 2);
+        int padding = SizeHelper.instance().getLeftPadding();
+        g.fillRect(padding, 8, SizeHelper.instance().getLength() + 1, 2);
         Date startDate = new Date(SizeHelper.instance().getMinimumTime());
         g.getFontMetrics().stringWidth(dateFormat.format(startDate));
         removeAll();
         int lastLabelPosition = Integer.MIN_VALUE;
         for (TuplePositionTime tuplePositionTime : horizontalPoints) {
             int labelLength = g.getFontMetrics().stringWidth(dateFormat.format(startDate));
-            if (getPadding() + tuplePositionTime.getPosition() - (labelLength / 2) < lastLabelPosition) {
+            if (padding + tuplePositionTime.getPosition() - (labelLength / 2) < lastLabelPosition) {
                 continue;
             }
             JLabel label = new JLabel(dateFormat.format(tuplePositionTime.getTime()));
-            lastLabelPosition = getPadding() + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
-            label.setBounds(getPadding() + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
-            g.fillRect(getPadding() + tuplePositionTime.getPosition(), 0, 2, 8);
+            lastLabelPosition = padding + tuplePositionTime.getPosition() + (labelLength / 2) + 5;
+            label.setBounds(padding + tuplePositionTime.getPosition() - (labelLength / 2), 12, 70, 15);
+            g.fillRect(padding + tuplePositionTime.getPosition(), 0, 2, 8);
             add(label);
         }
     }
 
-    private int getPadding() {
-        return SizeHelper.threadTitleWidth + SizeHelper.activeObjectTitleWidth + 10;
-    }
-
     public void updateView() {
-        this.setSize(SizeHelper.instance().getLength(), 30);
+        this.setSize(SizeHelper.instance().getTotalLength(), 30);
 //        repaint();
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(SizeHelper.instance().getLength(), 30);
+        return new Dimension(SizeHelper.instance().getTotalLength(), 30);
     }
 
     private class TuplePositionTime {
