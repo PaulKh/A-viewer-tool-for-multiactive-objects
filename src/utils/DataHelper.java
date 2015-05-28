@@ -20,10 +20,13 @@ public class DataHelper {
     private List<ActiveObject> activeObjects;
 
     public DataHelper(String directory) {
+
         dataParser = new DataParser();
         ParsedData parsedData = dataParser.parseData(directory);
         errorEntities = parsedData.getErrorEntities();
+        long time = System.currentTimeMillis();
         saturateActiveObjectsWithRequests(parsedData);
+        System.out.println("after parsing time="  + (System.currentTimeMillis() - time));
     }
 
     private void saturateActiveObjectsWithRequests(ParsedData parsedData) {

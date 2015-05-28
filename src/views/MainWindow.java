@@ -83,7 +83,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             openLogFiles();
         }
     };
-    private void openLogFiles(){
+
+    private void openLogFiles() {
         final JFileChooser fc = new JFileChooser();
         if (directory != null && Files.exists(Paths.get(directory))) {
             fc.setCurrentDirectory(new File(directory));
@@ -95,12 +96,16 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             setDirectory(fc.getSelectedFile().toString());
             PreferencesHelper.setPathToDirectory(directory);
         }
-    };
-    private void setDirectory(String directory){
+    }
+
+    ;
+
+    private void setDirectory(String directory) {
         this.directory = directory;
         selectLogFilesTextField.setText(directory);
         parseButton.setEnabled(true);
     }
+
     public MainWindow(String headTitle) throws HeadlessException {
         super(headTitle);
         setDirectory(PreferencesHelper.getPathToDirectory());
@@ -171,7 +176,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         parseButton.addActionListener(parseLogsAndBuildTree);
         clearButton.addActionListener(e -> {
             ArrowHandler.instance().clearAll();
-            for (FlowPanel flowPanel:flowPanels){
+            for (FlowPanel flowPanel : flowPanels) {
                 if (flowPanel instanceof ThreadFlowPanel)
                     flowPanel.deHighlightAllTheRectangles();
             }
@@ -179,12 +184,13 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             repaint();
         });
     }
-    private void updateClearButton(){
-        if (ArrowHandler.instance().getArrows().size() == 0){
+
+    private void updateClearButton() {
+        if (ArrowHandler.instance().getArrows().size() == 0) {
             clearButton.setEnabled(false);
-        }
-        else clearButton.setEnabled(true);
+        } else clearButton.setEnabled(true);
     }
+
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
@@ -212,7 +218,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         helpAction.addActionListener(e -> showHelpMenu());
         return menuBar;
     }
-    private void showHelpMenu(){
+
+    private void showHelpMenu() {
         JEditorPane editorPane = null;
         try {
             editorPane = new JEditorPane(getClass().getResource("/documentation.html"));
@@ -225,6 +232,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             e.printStackTrace();
         }
     }
+
     private void discoverMinimumAndMaximum() {
         SizeHelper.instance().setMaxMinScale(activeObjects, scaleSlider.getValue());
     }
@@ -533,19 +541,19 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         rootPanel = new JPanel();
         rootPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
         rootPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
         final Spacer spacer1 = new Spacer();
-        panel1.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel1.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         parseButton = new JButton();
         parseButton.setEnabled(false);
         parseButton.setText("Parse logs and build execution tree");
-        panel1.add(parseButton, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel1.add(parseButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         selectLogFilesTextField = new JTextField();
         selectLogFilesTextField.setEditable(false);
         selectLogFilesTextField.setEnabled(true);
         selectLogFilesTextField.setMargin(new Insets(0, 0, 0, 0));
-        selectLogFilesTextField.setText("");
+        selectLogFilesTextField.setText("Select log files...");
         panel1.add(selectLogFilesTextField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         activeObjectsRoot = new JPanel();
         activeObjectsRoot.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
@@ -566,6 +574,10 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         undoReorderingButton.setEnabled(false);
         undoReorderingButton.setText("Undo reordering");
         activeObjectsRoot.add(undoReorderingButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        clearButton = new JButton();
+        clearButton.setEnabled(false);
+        clearButton.setText("Clear");
+        activeObjectsRoot.add(clearButton, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

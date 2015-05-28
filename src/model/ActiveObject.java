@@ -10,14 +10,18 @@ public class ActiveObject {
     private String identifier;
     private List<ActiveObjectThread> threads = new ArrayList<ActiveObjectThread>();
 
+    public ActiveObject(String identifier) {
+        this.identifier = identifier;
+    }
+
     public String getIdentifier() {
         return identifier;
     }
-
-
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
+//
+//
+//    public void setIdentifier(String identifier) {
+//        this.identifier = identifier;
+//    }
 
     public ActiveObjectThread addThreadWithId(int id) {
         for (ActiveObjectThread thread : threads) {

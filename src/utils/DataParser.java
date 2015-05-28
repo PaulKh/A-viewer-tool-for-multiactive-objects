@@ -26,6 +26,7 @@ public class DataParser {
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
 
     public ParsedData parseData(String sourceDirectory) {
+
         List<DeserializedActiveObject> deserializedAOs = new ArrayList<DeserializedActiveObject>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
         List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
@@ -52,6 +53,7 @@ public class DataParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         ParsedData parsedData = new ParsedData();
         List<ActiveObject> activeObjects = new ArrayList<>();
         for (DeserializedActiveObject activeObject : deserializedAOs) {
@@ -170,10 +172,13 @@ public class DataParser {
     }
 
     public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedThreadEvent> dataList) {
-        ActiveObject activeObject = new ActiveObject();
+        ActiveObject activeObject;
+        if (dataList.size() != 0)
+            activeObject = new ActiveObject(dataList.get(0).getActiveObjectIdentifier());
+        else
+            return null;
         List<StartedButNotFinishedEvent> startedButNotFinishedEvents = new ArrayList<>();
         for (DeserializedThreadEvent deserializedLoggedData : dataList) {
-            activeObject.setIdentifier(deserializedLoggedData.getActiveObjectIdentifier());
             ActiveObjectThread thread = activeObject.addThreadWithId(deserializedLoggedData.getThreadId());
             ThreadEvent event = new ThreadEvent(deserializedLoggedData.getSequenceNumber(), thread);
             if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStarted) {

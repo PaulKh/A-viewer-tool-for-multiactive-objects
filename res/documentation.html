@@ -1,5 +1,5 @@
 <p>
-    The window of the application contains a main view and a menu bar. Before building the view source folder should be selected which can be done in two ways:
+    &#09;The window of the application contains a main view and a menu bar. Before building the view source folder should be selected which can be done in two ways:
     <br/>
     by pressing “Select log folder” button or through menu File Þ Open.
     <br/>
@@ -9,32 +9,32 @@
     added later.
 </p>
 <p>
-    At the bottom of the screen there is a scale panel, which allows user to check precisely what happens on a bigger scale.
+    &#09;At the bottom of the screen there is a scale panel, which allows user to check precisely what happens on a bigger scale.
 </p>
 <p>
-    After successful parsing and visualization of the content of logs the main view divides into two parts. The left part contains titles of active objects and
+    &#09;After successful parsing and visualization of the content of logs the main view divides into two parts. The left part contains titles of active objects and
     threads. Titles of active objects are unique identifiers built of the name of the class and the unique number. There is also a swap button between each two
     neighbor active objects, which swaps positions of two active objects. Up button near the title moves the active object at the top of the list.
 </p>
 <p>
-    On the right there is presented a workflow of the application each colored rectangle corresponds to a request call to an active object. Two colors used to
+    &#09;On the right there is presented a workflow of the application each colored rectangle corresponds to a request call to an active object. Two colors used to
     be able to easily distinguish two adjacent requests. White color means that the thread was idle at the moment.
 </p>
 <p>
-    Popup view appears with the name of the caller active object, the identifier of request (method name + unique number), and execution time. It will appear
+    &#09;Popup view appears with the name of the caller active object, the identifier of request (method name + unique number), and execution time. It will appear
     in the following cases:
 </p>
 <ul>
     <li>
         the mouse pointer overlaps the request
     </li>
+    <li>
+        mouse pointer is not pointing on any active object event but it points on an area close to an event. In this case popup view will be shown. (To make it
+        easier to get this information for fast events, which are represented with 1-2pixels width even on a huge scale)
+    </li>
 </ul>
 <p>
-    · mouse pointer is not pointing on any active object event but it points on an area close to an event. In this case popup view will be shown. (To make it
-    easier to get this information for fast events, which are represented with 1-2pixels width even on a huge scale)
-</p>
-<p>
-    Click on a thread flow area will cause a set of changes:
+    &#09;Click on a thread flow area will cause a set of changes:
 </p>
 <ul>
     <li>
@@ -56,7 +56,7 @@
         about this dialog will be presented later.
     </li>
 </ul>
-        Dialog with delivery request queue appears on a screen in the case user clicks any thread of any active object. List is sorted by the delivery time to the
+&#09;Dialog with delivery request queue appears on a screen in the case user clicks any thread of any active object. List is sorted by the delivery time to the
         queue. Depending on a selected time each row represents an event and it is colored in a way based on the following rules:
 <ul>
     <li>
@@ -73,11 +73,11 @@
     </li>
 </ul>
 <p>
-    Undo button at the button cancels last reordering, no matter what kind of reordering was made swapping, moving to the top or reordering after clicking an
+    &#09;Undo button at the button cancels last reordering, no matter what kind of reordering was made swapping, moving to the top or reordering after clicking an
     event. Queue can contain up to 40 undo states.
 </p>
 <p>
-    In preferences window there is a checkbox disabling/enabling reordering of the active objects. This checkbox influences just automated reorder and doesn’t
+    &#09;In preferences window there is a checkbox disabling/enabling reordering of the active objects. This checkbox influences just automated reorder and doesn’t
     influence “swap button” and “move to top” buttons. Number of allowed dialogs of delivery queue dialogs can be changed, 0 value means that delivery queue
     won’t be shown.
 </p>
