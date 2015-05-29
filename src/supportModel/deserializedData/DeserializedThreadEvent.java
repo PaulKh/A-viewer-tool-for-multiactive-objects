@@ -1,4 +1,4 @@
-package supportModel;
+package supportModel.deserializedData;
 
 import enums.TypeOfRequest;
 import exceptions.WreckedFileException;

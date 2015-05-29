@@ -8,6 +8,10 @@ import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.*;
+import supportModel.deserializedData.DeserializedActiveObject;
+import supportModel.deserializedData.DeserializedRequestEntity;
+import supportModel.deserializedData.DeserializedRequestsDelivered;
+import supportModel.deserializedData.DeserializedThreadEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,12 +30,11 @@ public class DataParser {
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
 
     public ParsedData parseData(String sourceDirectory) {
-
+        ParsedData parsedData = new ParsedData();
         List<DeserializedActiveObject> deserializedAOs = new ArrayList<DeserializedActiveObject>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
-        List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
         try {
-            Files.walk(Paths.get(sourceDirectory)).forEachOrdered(filePath -> {
+            Files.walk(Paths.get(sourceDirectory)).forEach(filePath -> {
                 if (!Files.isDirectory(filePath)) {
                     try {
                         if (filePath.getFileName().toString().startsWith("ActiveObject")) {
@@ -41,7 +44,7 @@ public class DataParser {
                         } else if (filePath.getFileName().toString().startsWith("Request")) {
                             WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
                             errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
-                            deserializedRequestDataList.addAll(wrappedRequestWithError.getRequestData());
+                            parsedData.addRequestEntities(wrappedRequestWithError.getRequestData());
                         } else {
                             errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
                         }
@@ -54,7 +57,7 @@ public class DataParser {
             e.printStackTrace();
         }
 
-        ParsedData parsedData = new ParsedData();
+
         List<ActiveObject> activeObjects = new ArrayList<>();
         for (DeserializedActiveObject activeObject : deserializedAOs) {
             WrappedActiveObjectWithError activeObjectWithError = getActiveObjectFromDeserializedData(activeObject.getDeserializedThreadEvents());
@@ -62,13 +65,12 @@ public class DataParser {
             errorEntities.addAll(activeObjectWithError.getErrorEntities());
         }
         parsedData.setActiveObjects(activeObjects);
-        parsedData.setDeserializedRequestDataList(deserializedRequestDataList);
         parsedData.addAllErrorEntities(errorEntities);
         return parsedData;
     }
 
     private WrappedRequestWithError readRequestFile(Path path) {
-        List<DeserializedRequestData> deserializedRequestDataList = new ArrayList<>();
+        List<DeserializedRequestEntity> deserializedRequestDataList = new ArrayList<>();
         List<String> lines = null;
         List<ErrorEntity> errorEntities = new ArrayList<>();
         try {
@@ -254,7 +256,7 @@ public class DataParser {
     }
 
     private class WrappedRequestWithError {
-        private List<DeserializedRequestData> requestData = new ArrayList<>();
+        private List<DeserializedRequestEntity> requestData = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
 
         public List<ErrorEntity> getErrorEntities() {
@@ -265,15 +267,15 @@ public class DataParser {
             errorEntities.add(errorEntity);
         }
 
-        public void addRequestData(DeserializedRequestData requestData) {
+        public void addRequestData(DeserializedRequestEntity requestData) {
             this.requestData.add(requestData);
         }
 
-        public List<DeserializedRequestData> getRequestData() {
+        public List<DeserializedRequestEntity> getRequestData() {
             return requestData;
         }
 
-        public void setRequestData(List<DeserializedRequestData> requestData) {
+        public void setRequestData(List<DeserializedRequestEntity> requestData) {
             this.requestData = requestData;
         }
 
@@ -282,8 +284,8 @@ public class DataParser {
         }
     }
 
-    private DeserializedRequestData parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
-        DeserializedRequestData requestData = new DeserializedRequestData(typeOfRequest);
+    private DeserializedRequestEntity parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
+        DeserializedRequestEntity requestData = DeserializedRequestEntity.buildWithRequestType(typeOfRequest);
         String delims = "[ ]";
         String[] properties = line.split(delims);
         requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[1]));

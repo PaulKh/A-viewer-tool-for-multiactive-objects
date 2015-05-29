@@ -43,4 +43,12 @@ public class ActiveObject {
     public List<ActiveObjectThread> getThreads() {
         return threads;
     }
+
+    @Override
+    public boolean equals(Object obj){
+        if (obj instanceof ActiveObject){
+            return ((ActiveObject)obj).getIdentifier().equals(identifier);
+        }
+        return false;
+    }
 }

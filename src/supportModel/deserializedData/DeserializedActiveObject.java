@@ -1,4 +1,6 @@
-package supportModel;
+package supportModel.deserializedData;
+
+import supportModel.ErrorEntity;
 
 import java.util.ArrayList;
 import java.util.List;

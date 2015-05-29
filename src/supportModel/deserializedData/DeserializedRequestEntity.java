@@ -1,26 +1,17 @@
-package supportModel;
+package supportModel.deserializedData;
 
 import enums.TypeOfRequest;
 
 /**
  * Created by pkhvoros on 3/30/15.
  */
-public class DeserializedRequestData {
-    private TypeOfRequest typeOfRequest;
+public abstract class DeserializedRequestEntity {
     private String senderIdentifier;
     private String receiverIdentifier;
     private String methodName;
     private int threadId;
     private long sequenceNumber;
     private long timeStamp;
-
-    public DeserializedRequestData(TypeOfRequest typeOfRequest) {
-        this.typeOfRequest = typeOfRequest;
-    }
-
-    public TypeOfRequest getTypeOfRequest() {
-        return typeOfRequest;
-    }
 
     public String getSenderIdentifier() {
         return senderIdentifier;
@@ -72,5 +63,12 @@ public class DeserializedRequestData {
 
     public String getId() {
         return senderIdentifier + sequenceNumber;
+    }
+    public static DeserializedRequestEntity buildWithRequestType(TypeOfRequest typeOfRequest){
+        switch (typeOfRequest){
+            case RequestDelivered:
+                return new DeserializedRequestsDelivered();
+            default: return new DeserializedRequestSent();
+        }
     }
 }

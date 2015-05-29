@@ -419,7 +419,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 undoQueue.addState(state);
                 undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
             }
-            moveViewToTheStart(arrowsAdded);
+            if (PreferencesHelper.isRepositioningAllowed())
+                moveViewToTheStart(arrowsAdded);
         }
         highlighThreadEvents();
         updateClearButton();
@@ -449,11 +450,11 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         Point position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
         buildMainView();
         ArrowHandler.instance().updateArrows(flowPanels);
-        if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START && arrowsAdded != null) {
-            position = ArrowHandler.instance().getMostLeftAndTopPositionForArrows(arrowsAdded);
-            position = new Point(position.x - 50, position.y - 50);
+        if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START && arrowsAdded != null && PreferencesHelper.isRepositioningAllowed()) {
+            moveViewToTheStart(arrowsAdded);
         }
-        moveViewToPosition(position);
+        else
+            moveViewToPosition(position);
     }
 
     private void moveViewToTheStart(List<Arrow> arrowsAdded) {

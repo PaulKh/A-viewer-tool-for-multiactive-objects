@@ -1,17 +1,21 @@
 package supportModel;
 
 import model.ActiveObject;
+import supportModel.deserializedData.DeserializedRequestData;
+import supportModel.deserializedData.DeserializedRequestEntity;
+import supportModel.deserializedData.DeserializedRequestSent;
+import supportModel.deserializedData.DeserializedRequestsDelivered;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by pkhvoros on 3/25/15.
  */
 //This class represents all the information parsed from the logs
 public class ParsedData {
-    //request information
-    List<DeserializedRequestData> deserializedRequestDataList;
+    DeserializedRequestData deserializedRequestData = new DeserializedRequestData();
     //information about active objects
     List<ActiveObject> activeObjects;
     //errors occured during the parsing
@@ -25,6 +29,7 @@ public class ParsedData {
         errorEntities.add(errorEntity);
     }
 
+
     public List<ActiveObject> getActiveObjects() {
         return activeObjects;
     }
@@ -37,12 +42,16 @@ public class ParsedData {
         this.errorEntities.addAll(errorEntities);
         return;
     }
-
-    public List<DeserializedRequestData> getDeserializedRequestDataList() {
-        return deserializedRequestDataList;
+    public void addDeserializedRequestEvent(DeserializedRequestEntity entity){
+        deserializedRequestData.addDeserializedDeliveryEntity(entity);
+    }
+    public void addRequestEntities(List<DeserializedRequestEntity> entities){
+        for (DeserializedRequestEntity entity: entities){
+            addDeserializedRequestEvent(entity);
+        }
     }
 
-    public void setDeserializedRequestDataList(List<DeserializedRequestData> deserializedRequestDataList) {
-        this.deserializedRequestDataList = deserializedRequestDataList;
+    public DeserializedRequestData getDeserializedRequestData() {
+        return deserializedRequestData;
     }
 }

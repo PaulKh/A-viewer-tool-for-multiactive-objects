@@ -3,9 +3,11 @@ package utils;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.DeserializedRequestData;
+import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.ErrorEntity;
 import supportModel.ParsedData;
+import supportModel.deserializedData.DeserializedRequestSent;
+import supportModel.deserializedData.DeserializedRequestsDelivered;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,57 +22,54 @@ public class DataHelper {
     private List<ActiveObject> activeObjects;
 
     public DataHelper(String directory) {
-
+        long time = System.currentTimeMillis();
         dataParser = new DataParser();
         ParsedData parsedData = dataParser.parseData(directory);
         errorEntities = parsedData.getErrorEntities();
-        long time = System.currentTimeMillis();
+        long timeForParsing = System.currentTimeMillis() - time;
         saturateActiveObjectsWithRequests(parsedData);
-        System.out.println("after parsing time="  + (System.currentTimeMillis() - time));
+        int counter = 0;
+        for (ActiveObject activeObject:activeObjects){
+            for (ActiveObjectThread thread:activeObject.getThreads())
+                counter += thread.getEvents().size();
+        }
+        System.out.println("time for parsing = "  + timeForParsing + "\ntime for merging = "
+                + (System.currentTimeMillis() - timeForParsing) + "\ntotal time = " + (System.currentTimeMillis() - time)
+                + "\nnumber of delivery " + parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().size()
+                + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size()
+                + "\nevents count = " + counter + "\n");
+
     }
 
     private void saturateActiveObjectsWithRequests(ParsedData parsedData) {
 //        int counter = 0, counter1 = 0;
-        for (DeserializedRequestData requestData : parsedData.getDeserializedRequestDataList()) {
-//            if (requestData.getTypeOfRequest() == TypeOfRequest.RequestDelivered)
-//                counter++;
-            enrichThreadEvent(parsedData.getActiveObjects(), requestData);
-        }
-//        for (ActiveObject activeObject: parsedData.getActiveObjects())
-//            for (ActiveObjectThread thread: activeObject.getThreads())
-//                for (ThreadEvent threadEvent:thread.getEvents())
-//                    counter1++;
-
         this.activeObjects = parsedData.getActiveObjects();
+        enrichThreadEvent(parsedData);
     }
 //The method updates the values of when request has been delivered, sent and who was the sender
 //In other words it is the merging of two different types of logs. One about the activeobject and the other is about request delivery info.
-    private void enrichThreadEvent(List<ActiveObject> activeObjects, DeserializedRequestData requestData) {
+    private void enrichThreadEvent(ParsedData parsedData) {
         for (ActiveObject activeObject : activeObjects) {
             for (ActiveObjectThread thread : activeObject.getThreads()) {
                 for (ThreadEvent threadEvent : thread.getEvents()) {
-                    if (threadEvent.getId().equals(requestData.getId())) {
-                        switch (requestData.getTypeOfRequest()) {
-                            case RequestDelivered:
-                                setDerivedTime(threadEvent, requestData);
-                                break;
-                            case RequestSent:
-                                setRequestSent(threadEvent, requestData);
-                                break;
-                        }
-                        return;
-                    }
+
+                    DeserializedRequestsDelivered delivered = parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().get(threadEvent.getId());
+                    if (delivered != null)
+                        setDerivedTime(threadEvent, delivered);
+                    DeserializedRequestSent sent = parsedData.getDeserializedRequestData().getDeserializedSendRequestData().get(threadEvent.getId());
+                    if (sent != null)
+                        setRequestSent(threadEvent, sent);
                 }
             }
         }
     }
 
-    private void setRequestSent(ThreadEvent threadEvent, DeserializedRequestData requestData) {
+    private void setRequestSent(ThreadEvent threadEvent, DeserializedRequestEntity requestData) {
         threadEvent.setRequestSentTime(requestData.getTimeStamp());
         threadEvent.setSenderThreadId(requestData.getThreadId());
     }
 
-    private void setDerivedTime(ThreadEvent threadEvent, DeserializedRequestData requestData) {
+    private void setDerivedTime(ThreadEvent threadEvent, DeserializedRequestsDelivered requestData) {
         threadEvent.setDerivedTime(requestData.getTimeStamp());
     }
 
