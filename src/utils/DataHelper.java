@@ -34,7 +34,7 @@ public class DataHelper {
                 counter += thread.getEvents().size();
         }
         System.out.println("time for parsing = "  + timeForParsing + "\ntime for merging = "
-                + (System.currentTimeMillis() - timeForParsing) + "\ntotal time = " + (System.currentTimeMillis() - time)
+                + (System.currentTimeMillis() - timeForParsing - time) + "\ntotal time = " + (System.currentTimeMillis() - time)
                 + "\nnumber of delivery " + parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().size()
                 + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size()
                 + "\nevents count = " + counter + "\n");

@@ -12,7 +12,10 @@ import supportModel.deserializedData.DeserializedActiveObject;
 import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.deserializedData.DeserializedRequestsDelivered;
 import supportModel.deserializedData.DeserializedThreadEvent;
+import views.ThreadFlowPanel;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,43 +24,60 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by pkhvoros on 3/13/15.
  */
 public class DataParser {
     //this is the mapping between activeObject ids from the program and new human readable activeObject ids
-    private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new HashMap<>();
+    private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new ConcurrentHashMap<>();
 
     public ParsedData parseData(String sourceDirectory) {
         ParsedData parsedData = new ParsedData();
-        List<DeserializedActiveObject> deserializedAOs = new ArrayList<DeserializedActiveObject>();
-        List<ErrorEntity> errorEntities = new ArrayList<>();
+        List<DeserializedActiveObject> deserializedAOs = new CopyOnWriteArrayList<DeserializedActiveObject>();
+        List<ErrorEntity> errorEntities = new CopyOnWriteArrayList<>();
+        List<Thread> threads = new ArrayList<>();
         try {
             Files.walk(Paths.get(sourceDirectory)).forEach(filePath -> {
-                if (!Files.isDirectory(filePath)) {
-                    try {
-                        if (filePath.getFileName().toString().startsWith("ActiveObject")) {
-                            DeserializedActiveObject activeObject = readActiveObjectFile(filePath);
-                            deserializedAOs.add(readActiveObjectFile(filePath));
-                            errorEntities.addAll(activeObject.getErrorEntities());
-                        } else if (filePath.getFileName().toString().startsWith("Request")) {
-                            WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
-                            errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
-                            parsedData.addRequestEntities(wrappedRequestWithError.getRequestData());
-                        } else {
-                            errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!Files.isDirectory(filePath)) {
+                            try {
+                                if (filePath.getFileName().toString().startsWith("ActiveObject")) {
+                                    DeserializedActiveObject activeObject = readActiveObjectFile(filePath);
+                                    deserializedAOs.add(readActiveObjectFile(filePath));
+                                    errorEntities.addAll(activeObject.getErrorEntities());
+                                } else if (filePath.getFileName().toString().startsWith("Request")) {
+                                    WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
+                                    errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
+                                    parsedData.addRequestEntities(wrappedRequestWithError.getRequestData());
+                                } else {
+                                    errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
+                                }
+                            } catch (WrongLogFileFormatException exception) {
+                                errorEntities.add(generateWreckedWrongFileErrorEntity(exception.getMessage(), Error.WrongFileFormat));
+                            }
                         }
-                    } catch (WrongLogFileFormatException exception) {
-                        errorEntities.add(generateWreckedWrongFileErrorEntity(exception.getMessage(), Error.WrongFileFormat));
                     }
-                }
+                });
+                thread.start();
+                threads.add(thread);
+
             });
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-
+        for (Thread thread:threads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         List<ActiveObject> activeObjects = new ArrayList<>();
         for (DeserializedActiveObject activeObject : deserializedAOs) {
             WrappedActiveObjectWithError activeObjectWithError = getActiveObjectFromDeserializedData(activeObject.getDeserializedThreadEvents());
@@ -74,18 +94,19 @@ public class DataParser {
         List<String> lines = null;
         List<ErrorEntity> errorEntities = new ArrayList<>();
         try {
-            lines = Files.readAllLines(path);
-            for (int i = 0; lines.size() > i; i++) {
-                String line = lines.get(i);
-                try {
-                    if (line.startsWith("deliverrequest")) {
-                        deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestDelivered));
-                    } else if (line.startsWith("beforerequestsent")) {
-                        deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestSent));
+            try (BufferedReader br = new BufferedReader(new FileReader(path.toString()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    try {
+                        if (line.startsWith("deliverrequest")) {
+                            deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestDelivered));
+                        } else if (line.startsWith("beforerequestsent")) {
+                            deserializedRequestDataList.add(parseDeliverRequests(line, TypeOfRequest.RequestSent));
+                        }
+                    } catch (WreckedFileException e) {
+                        errorEntities.add(generateWreckedWrongFileErrorEntity(path.toString(), Error.WreckedFile));
+                        break;
                     }
-                } catch (WreckedFileException e) {
-                    errorEntities.add(generateWreckedWrongFileErrorEntity(path.toString(), Error.WreckedFile));
-                    break;
                 }
             }
         } catch (IOException e) {
@@ -103,10 +124,9 @@ public class DataParser {
         List<ErrorEntity> errorEntities = new ArrayList<>();
         DeserializedThreadEvent currentRequest = null;
         int numberOfLinesForRequest = 0;
-        try {
-            List<String> lines = Files.readAllLines(path);
-            for (int i = 0; lines.size() > i; i++) {
-                String line = lines.get(i);
+        try (BufferedReader br = new BufferedReader(new FileReader(path.toString()))) {
+            String line;
+            while ((line = br.readLine()) != null) {
                 switch (numberOfLinesForRequest) {
                     case 0:
                         if (currentRequest != null) {

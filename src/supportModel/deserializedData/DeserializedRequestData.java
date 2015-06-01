@@ -2,15 +2,16 @@ package supportModel.deserializedData;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by pkhvoros on 5/29/15.
  */
 public class DeserializedRequestData {
     //request information with delivery time
-    Map<String, DeserializedRequestsDelivered> deserializedDeliveryRequestData = new HashMap<>();
+    Map<String, DeserializedRequestsDelivered> deserializedDeliveryRequestData = new ConcurrentHashMap<>();
     //request information with sending time
-    Map<String, DeserializedRequestSent> deserializedSendRequestData = new HashMap<>();
+    Map<String, DeserializedRequestSent> deserializedSendRequestData = new ConcurrentHashMap<>();
 
     public Map<String, DeserializedRequestsDelivered> getDeserializedDeliveryRequestData() {
         return deserializedDeliveryRequestData;
