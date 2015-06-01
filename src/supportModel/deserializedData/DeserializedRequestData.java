@@ -1,6 +1,5 @@
 package supportModel.deserializedData;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,11 +19,11 @@ public class DeserializedRequestData {
     public Map<String, DeserializedRequestSent> getDeserializedSendRequestData() {
         return deserializedSendRequestData;
     }
-    public void addDeserializedDeliveryEntity(DeserializedRequestEntity entity){
-        if (entity instanceof DeserializedRequestsDelivered){
+
+    public void addDeserializedDeliveryEntity(DeserializedRequestEntity entity) {
+        if (entity instanceof DeserializedRequestsDelivered) {
             deserializedDeliveryRequestData.put(entity.getId(), (DeserializedRequestsDelivered) entity);
-        }
-        else if(entity instanceof DeserializedRequestSent){
+        } else if (entity instanceof DeserializedRequestSent) {
             deserializedSendRequestData.put(entity.getId(), (DeserializedRequestSent) entity);
         }
     }

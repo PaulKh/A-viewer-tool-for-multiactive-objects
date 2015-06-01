@@ -3,12 +3,9 @@ package supportModel;
 import model.ActiveObject;
 import supportModel.deserializedData.DeserializedRequestData;
 import supportModel.deserializedData.DeserializedRequestEntity;
-import supportModel.deserializedData.DeserializedRequestSent;
-import supportModel.deserializedData.DeserializedRequestsDelivered;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by pkhvoros on 3/25/15.
@@ -42,11 +39,13 @@ public class ParsedData {
         this.errorEntities.addAll(errorEntities);
         return;
     }
-    public void addDeserializedRequestEvent(DeserializedRequestEntity entity){
+
+    public void addDeserializedRequestEvent(DeserializedRequestEntity entity) {
         deserializedRequestData.addDeserializedDeliveryEntity(entity);
     }
-    public void addRequestEntities(List<DeserializedRequestEntity> entities){
-        for (DeserializedRequestEntity entity: entities){
+
+    public void addRequestEntities(List<DeserializedRequestEntity> entities) {
+        for (DeserializedRequestEntity entity : entities) {
             addDeserializedRequestEvent(entity);
         }
     }

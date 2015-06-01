@@ -25,6 +25,7 @@ public class PreferencesHelper {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         prefs.putInt(reOrderingAllowedKey, OrderingPolicyEnum.getValueByOrderingPolicy(policyEnum));
     }
+
     public static boolean isRepositioningAllowed() {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         return prefs.getBoolean(viewRepositioningAllowedKey, true);
@@ -34,6 +35,7 @@ public class PreferencesHelper {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         prefs.putBoolean(viewRepositioningAllowedKey, isAllowed);
     }
+
     public static int getNumberOfDialogs() {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         return prefs.getInt(numberOfDialogsKey, 0);
@@ -53,7 +55,8 @@ public class PreferencesHelper {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         prefs.put(defaultDirectoryKey, value);
     }
-    public static void clearAllPreferences(){
+
+    public static void clearAllPreferences() {
         Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
         try {
             prefs.clear();

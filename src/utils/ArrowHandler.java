@@ -4,7 +4,6 @@ import model.ActiveObject;
 import model.ThreadEvent;
 import supportModel.Arrow;
 import views.FlowPanel;
-import views.ThreadFlowPanel;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -104,7 +103,8 @@ public class ArrowHandler {
             updateArrow(arrow, flowPanels);
         }
     }
-    public Point getMostLeftAndTopPositionForArrows(List<Arrow> arrows){
+
+    public Point getMostLeftAndTopPositionForArrows(List<Arrow> arrows) {
         long timeExecuted = Long.MAX_VALUE;
         int yPosition = Integer.MAX_VALUE;
         for (Arrow arrow : arrows) {

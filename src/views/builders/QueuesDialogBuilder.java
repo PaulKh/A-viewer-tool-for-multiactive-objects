@@ -4,7 +4,6 @@ import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import utils.PreferencesHelper;
-import views.MainWindow;
 import views.renderers.QueueDialogRenderer;
 import views.table_models.DeliveryQueueTableModel;
 

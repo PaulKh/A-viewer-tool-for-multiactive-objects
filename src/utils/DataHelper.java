@@ -3,9 +3,9 @@ package utils;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.ErrorEntity;
 import supportModel.ParsedData;
+import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.deserializedData.DeserializedRequestSent;
 import supportModel.deserializedData.DeserializedRequestsDelivered;
 
@@ -29,11 +29,11 @@ public class DataHelper {
         long timeForParsing = System.currentTimeMillis() - time;
         saturateActiveObjectsWithRequests(parsedData);
         int counter = 0;
-        for (ActiveObject activeObject:activeObjects){
-            for (ActiveObjectThread thread:activeObject.getThreads())
+        for (ActiveObject activeObject : activeObjects) {
+            for (ActiveObjectThread thread : activeObject.getThreads())
                 counter += thread.getEvents().size();
         }
-        System.out.println("time for parsing = "  + timeForParsing + "\ntime for merging = "
+        System.out.println("time for parsing = " + timeForParsing + "\ntime for merging = "
                 + (System.currentTimeMillis() - timeForParsing - time) + "\ntotal time = " + (System.currentTimeMillis() - time)
                 + "\nnumber of delivery " + parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().size()
                 + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size()
@@ -46,7 +46,8 @@ public class DataHelper {
         this.activeObjects = parsedData.getActiveObjects();
         enrichThreadEvent(parsedData);
     }
-//The method updates the values of when request has been delivered, sent and who was the sender
+
+    //The method updates the values of when request has been delivered, sent and who was the sender
 //In other words it is the merging of two different types of logs. One about the activeobject and the other is about request delivery info.
     private void enrichThreadEvent(ParsedData parsedData) {
         for (ActiveObject activeObject : activeObjects) {
@@ -81,7 +82,7 @@ public class DataHelper {
         return activeObjects;
     }
 
-//This method identifies threadEvents which were called by the given thread event
+    //This method identifies threadEvents which were called by the given thread event
     public List<ThreadEvent> getOutgoingThreadEvents(ThreadEvent threadEvent) {
         List<ThreadEvent> threadEvents = new ArrayList<>();
         for (ActiveObject activeObject : activeObjects) {

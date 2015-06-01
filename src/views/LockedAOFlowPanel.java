@@ -6,12 +6,11 @@ import model.ThreadEvent;
 import supportModel.RectangleWithThreadEvent;
 import utils.SizeHelper;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,16 +18,18 @@ import java.util.List;
  */
 public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener {
     private ActiveObject activeObject;
+
     public LockedAOFlowPanel(ActiveObject activeObject) {
         this.activeObject = activeObject;
-        for(ActiveObjectThread activeObjectThread:activeObject.getThreads())
+        for (ActiveObjectThread activeObjectThread : activeObject.getThreads())
             for (ThreadEvent threadEvent : activeObjectThread.getEvents())
                 rectangles.add(new RectangleWithThreadEvent(threadEvent));
         this.addMouseMotionListener(this);
         initMouseClickListener();
         init();
     }
-    private void initMouseClickListener(){
+
+    private void initMouseClickListener() {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -49,6 +50,7 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
             }
         });
     }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -72,15 +74,16 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
 
     @Override
     public boolean containsThread(ActiveObjectThread thread) {
-        for (ActiveObjectThread tempThread:activeObject.getThreads()){
+        for (ActiveObjectThread tempThread : activeObject.getThreads()) {
             if (thread.equals(tempThread))
                 return true;
         }
         return false;
     }
+
     @Override
     public boolean containsSourceThreadForEvent(ThreadEvent threadEvent) {
-        for (ActiveObjectThread activeObjectThread: activeObject.getThreads())
+        for (ActiveObjectThread activeObjectThread : activeObject.getThreads())
             if (activeObjectThread.getThreadId() == threadEvent.getSenderThreadId() && activeObjectThread.getActiveObject().getIdentifier() == threadEvent.getSenderActiveObjectId())
                 return true;
         return false;
@@ -89,7 +92,7 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
     @Override
     public List<ThreadEvent> getAllThreadEvents() {
         List<ThreadEvent> resultEvents = new ArrayList<>();
-        for (ActiveObjectThread thread:activeObject.getThreads()){
+        for (ActiveObjectThread thread : activeObject.getThreads()) {
             resultEvents.addAll(thread.getEvents());
         }
         return resultEvents;

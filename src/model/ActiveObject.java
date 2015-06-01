@@ -45,9 +45,9 @@ public class ActiveObject {
     }
 
     @Override
-    public boolean equals(Object obj){
-        if (obj instanceof ActiveObject){
-            return ((ActiveObject)obj).getIdentifier().equals(identifier);
+    public boolean equals(Object obj) {
+        if (obj instanceof ActiveObject) {
+            return ((ActiveObject) obj).getIdentifier().equals(identifier);
         }
         return false;
     }

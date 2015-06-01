@@ -1,5 +1,4 @@
 import org.apache.commons.io.FileUtils;
-import utils.PreferencesHelper;
 import views.MainWindow;
 
 import java.io.File;

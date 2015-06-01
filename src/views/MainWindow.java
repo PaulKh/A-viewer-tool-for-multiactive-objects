@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -42,29 +41,16 @@ import java.util.List;
 
 //This is the main frame of the application
 public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback, LockerButtonCallback {
+    MouseAdapter openLogFiles = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+            openLogFiles();
+        }
+    };
     private DataHelper dataHelper;
     private List<ActiveObject> activeObjects;
     private String directory;
-    private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
-    private List<ActiveObject> lockedObjects = new ArrayList<>();
-
-    //views
-    private JTextField selectLogFilesTextField;
-    private JPanel rootPanel;
-    private JButton parseButton;
-    private JPanel activeObjectsRoot;
-    private JScrollPane mainScrollPane;
-    private ScrollRootPanel scrollPaneRoot;
-    private List<SwapActiveObjectsButton> swapActiveObjectsButtons = new ArrayList<>();
-
-    private JSlider scaleSlider;
-    private JLabel scaleLabel;
-    private JPanel container;
-    private JButton undoReorderingButton;
-    private JButton clearButton;
-    private ScalePanel scalePanel;
-    private List<FlowPanel> flowPanels;
-
     ActionListener parseLogsAndBuildTree = e -> {
         ArrowHandler.instance().clearAll();
         dataHelper = new DataHelper(directory);
@@ -75,14 +61,38 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         discoverMinimumAndMaximum();
         buildMainView();
     };
+    private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
+    private List<ActiveObject> lockedObjects = new ArrayList<>();
+    //views
+    private JTextField selectLogFilesTextField;
+    private JPanel rootPanel;
+    private JButton parseButton;
+    private JPanel activeObjectsRoot;
+    private JScrollPane mainScrollPane;
+    private ScrollRootPanel scrollPaneRoot;
+    private List<SwapActiveObjectsButton> swapActiveObjectsButtons = new ArrayList<>();
+    private JSlider scaleSlider;
+    private JLabel scaleLabel;
+    private JPanel container;
+    private JButton undoReorderingButton;
+    private JButton clearButton;
+    private ScalePanel scalePanel;
+    private List<FlowPanel> flowPanels;
 
-    MouseAdapter openLogFiles = new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            super.mouseClicked(e);
-            openLogFiles();
-        }
-    };
+    public MainWindow(String headTitle) throws HeadlessException {
+        super(headTitle);
+        setDirectory(PreferencesHelper.getPathToDirectory());
+        setContentPane(rootPanel);
+        setJMenuBar(createMenuBar());
+        assignActionsToButtons();
+        initUndoAction();
+        initSlider();
+        pack();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+
+    ;
 
     private void openLogFiles() {
         final JFileChooser fc = new JFileChooser();
@@ -98,25 +108,10 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         }
     }
 
-    ;
-
     private void setDirectory(String directory) {
         this.directory = directory;
         selectLogFilesTextField.setText(directory);
         parseButton.setEnabled(true);
-    }
-
-    public MainWindow(String headTitle) throws HeadlessException {
-        super(headTitle);
-        setDirectory(PreferencesHelper.getPathToDirectory());
-        setContentPane(rootPanel);
-        setJMenuBar(createMenuBar());
-        assignActionsToButtons();
-        initUndoAction();
-        initSlider();
-        pack();
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
     }
 
     private void initUndoAction() {
@@ -452,8 +447,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         ArrowHandler.instance().updateArrows(flowPanels);
         if (positionPolicyEnum == ViewPositionPolicyEnum.TO_THE_START && arrowsAdded != null && PreferencesHelper.isRepositioningAllowed()) {
             moveViewToTheStart(arrowsAdded);
-        }
-        else
+        } else
             moveViewToPosition(position);
     }
 

@@ -84,7 +84,8 @@ public class ActiveObjectTitlePanel extends JPanel {
             upButtonCallback.upButtonPressed(activeObject);
         }
     }
-    private void lockerButtonPressed(){
+
+    private void lockerButtonPressed() {
         if (lockerButtonCallback != null)
             lockerButtonCallback.lockerButtonPressed(activeObject);
     }

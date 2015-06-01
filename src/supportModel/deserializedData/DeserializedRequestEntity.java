@@ -13,6 +13,15 @@ public abstract class DeserializedRequestEntity {
     private long sequenceNumber;
     private long timeStamp;
 
+    public static DeserializedRequestEntity buildWithRequestType(TypeOfRequest typeOfRequest) {
+        switch (typeOfRequest) {
+            case RequestDelivered:
+                return new DeserializedRequestsDelivered();
+            default:
+                return new DeserializedRequestSent();
+        }
+    }
+
     public String getSenderIdentifier() {
         return senderIdentifier;
     }
@@ -63,12 +72,5 @@ public abstract class DeserializedRequestEntity {
 
     public String getId() {
         return senderIdentifier + sequenceNumber;
-    }
-    public static DeserializedRequestEntity buildWithRequestType(TypeOfRequest typeOfRequest){
-        switch (typeOfRequest){
-            case RequestDelivered:
-                return new DeserializedRequestsDelivered();
-            default: return new DeserializedRequestSent();
-        }
     }
 }

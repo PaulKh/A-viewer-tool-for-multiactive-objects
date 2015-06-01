@@ -7,12 +7,11 @@ import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.*;
+import supportModel.ErrorEntity;
+import supportModel.ParsedData;
 import supportModel.deserializedData.DeserializedActiveObject;
 import supportModel.deserializedData.DeserializedRequestEntity;
-import supportModel.deserializedData.DeserializedRequestsDelivered;
 import supportModel.deserializedData.DeserializedThreadEvent;
-import views.ThreadFlowPanel;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -21,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +31,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DataParser {
     //this is the mapping between activeObject ids from the program and new human readable activeObject ids
     private static Map<String, String> oldAndNewAOIdsKeyValuePairs = new ConcurrentHashMap<>();
+
+    private static ErrorEntity generateWreckedWrongFileErrorEntity(String path, Error error) {
+        ErrorEntity errorEntity = new ErrorEntity(error);
+        errorEntity.setMessage("File name=" + path);
+        return errorEntity;
+    }
 
     public ParsedData parseData(String sourceDirectory) {
         ParsedData parsedData = new ParsedData();
@@ -71,7 +75,7 @@ public class DataParser {
             e.printStackTrace();
         }
 
-        for (Thread thread:threads){
+        for (Thread thread : threads) {
             try {
                 thread.join();
             } catch (InterruptedException e) {
@@ -187,12 +191,6 @@ public class DataParser {
         return deserializedActiveObject;
     }
 
-    private static ErrorEntity generateWreckedWrongFileErrorEntity(String path, Error error) {
-        ErrorEntity errorEntity = new ErrorEntity(error);
-        errorEntity.setMessage("File name=" + path);
-        return errorEntity;
-    }
-
     public WrappedActiveObjectWithError getActiveObjectFromDeserializedData(List<DeserializedThreadEvent> dataList) {
         ActiveObject activeObject;
         if (dataList.size() != 0)
@@ -231,6 +229,30 @@ public class DataParser {
         return wrappedActiveObjectWithError;
     }
 
+    private DeserializedRequestEntity parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
+        DeserializedRequestEntity requestData = DeserializedRequestEntity.buildWithRequestType(typeOfRequest);
+        String delims = "[ ]";
+        String[] properties = line.split(delims);
+        requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[1]));
+        requestData.setThreadId(Integer.parseInt(properties[2]));
+        requestData.setMethodName(properties[3]);
+        requestData.setSequenceNumber(Long.valueOf(properties[4]));
+        requestData.setTimeStamp(Long.valueOf(properties[5]));
+        requestData.setSenderIdentifier(locateOrGenerateIdentifierFromKey(properties[6]));
+        return requestData;
+    }
+
+    private String locateOrGenerateIdentifierFromKey(String key) {
+        String newIdentifier;
+        if (!oldAndNewAOIdsKeyValuePairs.containsKey(key)) {
+            newIdentifier = AOIdentifierGenerator.generateUniqueAOIdentifier(key);
+            oldAndNewAOIdsKeyValuePairs.put(key, newIdentifier);
+        } else {
+            newIdentifier = oldAndNewAOIdsKeyValuePairs.get(key);
+        }
+        return newIdentifier;
+    }
+
     private class StartedButNotFinishedEvent {
         private ActiveObjectThread activeObjectThread;
         private ThreadEvent event;
@@ -254,8 +276,8 @@ public class DataParser {
     }
 
     private class WrappedActiveObjectWithError {
-        private ActiveObject activeObject;
         List<ErrorEntity> errorEntities = new ArrayList<>();
+        private ActiveObject activeObject;
 
         public WrappedActiveObjectWithError(ActiveObject activeObject) {
             this.activeObject = activeObject;
@@ -276,11 +298,15 @@ public class DataParser {
     }
 
     private class WrappedRequestWithError {
-        private List<DeserializedRequestEntity> requestData = new ArrayList<>();
         List<ErrorEntity> errorEntities = new ArrayList<>();
+        private List<DeserializedRequestEntity> requestData = new ArrayList<>();
 
         public List<ErrorEntity> getErrorEntities() {
             return errorEntities;
+        }
+
+        public void setErrorEntities(List<ErrorEntity> errorEntities) {
+            this.errorEntities = errorEntities;
         }
 
         public void addErrorEntity(ErrorEntity errorEntity) {
@@ -298,34 +324,6 @@ public class DataParser {
         public void setRequestData(List<DeserializedRequestEntity> requestData) {
             this.requestData = requestData;
         }
-
-        public void setErrorEntities(List<ErrorEntity> errorEntities) {
-            this.errorEntities = errorEntities;
-        }
-    }
-
-    private DeserializedRequestEntity parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
-        DeserializedRequestEntity requestData = DeserializedRequestEntity.buildWithRequestType(typeOfRequest);
-        String delims = "[ ]";
-        String[] properties = line.split(delims);
-        requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[1]));
-        requestData.setThreadId(Integer.parseInt(properties[2]));
-        requestData.setMethodName(properties[3]);
-        requestData.setSequenceNumber(Long.valueOf(properties[4]));
-        requestData.setTimeStamp(Long.valueOf(properties[5]));
-        requestData.setSenderIdentifier(locateOrGenerateIdentifierFromKey(properties[6]));
-        return requestData;
-    }
-
-    private String locateOrGenerateIdentifierFromKey(String key) {
-        String newIdentifier;
-        if (!oldAndNewAOIdsKeyValuePairs.containsKey(key)) {
-            newIdentifier = AOIdentifierGenerator.generateUniqueAOIdentifier(key);
-            oldAndNewAOIdsKeyValuePairs.put(key, newIdentifier);
-        } else {
-            newIdentifier = oldAndNewAOIdsKeyValuePairs.get(key);
-        }
-        return newIdentifier;
     }
 }
 

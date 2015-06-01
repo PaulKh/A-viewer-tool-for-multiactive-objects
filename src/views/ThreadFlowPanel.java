@@ -8,19 +8,16 @@ import supportModel.RectangleWithThreadEvent;
 import utils.ArrowHandler;
 import utils.SizeHelper;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by pkhvoros on 3/19/15.
  */
-public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener{
+public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
 
     private ActiveObjectThread activeObjectThread;
 
@@ -32,7 +29,8 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener{
         initMouseClickListener();
         init();
     }
-    private void initMouseClickListener(){
+
+    private void initMouseClickListener() {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -53,8 +51,6 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener{
             }
         });
     }
-
-
 
 
     @Override

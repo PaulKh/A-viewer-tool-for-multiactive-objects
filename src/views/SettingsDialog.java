@@ -7,8 +7,6 @@ import enums.OrderingPolicyEnum;
 import utils.PreferencesHelper;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 

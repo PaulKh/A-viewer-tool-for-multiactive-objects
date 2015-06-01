@@ -9,15 +9,13 @@ import utils.SizeHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by pkhvoros on 5/21/15.
  */
-public abstract class FlowPanel extends JPanel{
+public abstract class FlowPanel extends JPanel {
     protected ThreadEventClickedCallback callback;
     protected List<RectangleWithThreadEvent> rectangles = new ArrayList<>();
 
@@ -26,10 +24,12 @@ public abstract class FlowPanel extends JPanel{
         this.setBackground(Color.WHITE);
         updateSize();
     }
+
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(SizeHelper.instance().getTotalLength(), SizeHelper.threadHeight);
     }
+
     public void updateSize() {
         SizeHelper sizeHelper = SizeHelper.instance();
         long totalTime = sizeHelper.getMaximumTime() - sizeHelper.getMinimumTime();
@@ -47,6 +47,7 @@ public abstract class FlowPanel extends JPanel{
         }
         setSize(sizeHelper.getTotalLength(), SizeHelper.threadHeight);
     }
+
     protected RectangleWithThreadEvent getRectangleContainingPoint(MouseEvent mouseEvent, int delta) {
         int mx = mouseEvent.getX();
         int my = mouseEvent.getY();
@@ -58,11 +59,15 @@ public abstract class FlowPanel extends JPanel{
         }
         return null;
     }
+
     public abstract boolean containsThread(ActiveObjectThread thread);
+
     public abstract boolean containsSourceThreadForEvent(ThreadEvent threadEvent);
+
     public abstract List<ThreadEvent> getAllThreadEvents();
-    public void deHighlightAllTheRectangles(){
-        for (RectangleWithThreadEvent rect: rectangles){
+
+    public void deHighlightAllTheRectangles() {
+        for (RectangleWithThreadEvent rect : rectangles) {
             rect.setHighlighted(false);
         }
     }

@@ -29,12 +29,12 @@ public class Arrow {
         return y1;
     }
 
-    public int getY2() {
-        return y2;
-    }
-
     public void setY1(int y1) {
         this.y1 = y1;
+    }
+
+    public int getY2() {
+        return y2;
     }
 
     public void setY2(int y2) {

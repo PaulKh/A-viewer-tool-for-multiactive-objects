@@ -10,11 +10,11 @@ import java.util.List;
  * Created by pkhvoros on 3/19/15.
  */
 public class SizeHelper {
-    private static SizeHelper sizeHelper;
     public static int activeObjectTitleHeight = 100;
     public static int activeObjectTitleWidth = 160;
     public static int threadTitleWidth = 120;
     public static int threadHeight = 30;
+    private static SizeHelper sizeHelper;
     private long minimumTime;
     private long maximumTime;
     private int scale;
@@ -48,11 +48,6 @@ public class SizeHelper {
         length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
 
-    public void setScale(int scale) {
-        this.scale = scale;
-        length = (int) (maximumTime - minimumTime) * scale / 1000;
-    }
-
     public long getMinimumTime() {
         return minimumTime;
     }
@@ -63,6 +58,11 @@ public class SizeHelper {
 
     public int getScale() {
         return scale;
+    }
+
+    public void setScale(int scale) {
+        this.scale = scale;
+        length = (int) (maximumTime - minimumTime) * scale / 1000;
     }
 
     public int getLength() {
@@ -77,11 +77,13 @@ public class SizeHelper {
     public long convertLengthToTime(int xPosition) {
         return minimumTime + (xPosition * (maximumTime - minimumTime)) / length;
     }
-    public int getTotalLength(){
+
+    public int getTotalLength() {
         //third item in summation is padding on the right side
         return length + getLeftPadding() + 50;
     }
-    public int getLeftPadding(){
+
+    public int getLeftPadding() {
         return activeObjectTitleWidth + threadTitleWidth;
     }
 }
