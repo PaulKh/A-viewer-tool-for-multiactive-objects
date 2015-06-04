@@ -85,4 +85,9 @@ public class SizeHelper {
     public int getLeftPadding() {
         return activeObjectTitleWidth + threadTitleWidth;
     }
+
+    public boolean didEventHappendBetweenMinAndMax(long time){
+        return time > minimumTime && time < maximumTime;
+    }
+
 }

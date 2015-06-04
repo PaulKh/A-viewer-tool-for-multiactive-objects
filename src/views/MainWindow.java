@@ -412,9 +412,12 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 updateView(ViewPositionPolicyEnum.TO_THE_START, arrowsAdded);
                 undoQueue.addState(state);
                 undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+            } else {
+                if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
+                    moveViewToTheStart(arrowsAdded);
             }
         } else {
-            if (PreferencesHelper.isRepositioningAllowed())
+            if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
                 moveViewToTheStart(arrowsAdded);
         }
         highlighThreadEvents();

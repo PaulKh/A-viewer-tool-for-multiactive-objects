@@ -53,7 +53,11 @@ public class ArrowHandler {
             y1 = sourcePanel.getY() + sourcePanel.getHeight() / 2;
         }
         int y2 = destinationPanel.getY() + destinationPanel.getHeight() / 2;
-        return new Arrow(y1, y2, sourceThreadEvent, destinationThreadEvent);
+        if (SizeHelper.instance().didEventHappendBetweenMinAndMax(destinationThreadEvent.getRequestSentTime()) &&
+            SizeHelper.instance().didEventHappendBetweenMinAndMax(destinationThreadEvent.getDerivedTime())){
+            return new Arrow(y1, y2, sourceThreadEvent, destinationThreadEvent);
+        }
+        return null;
     }
 
     private Arrow createArrowForThreadEvent(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent, List<FlowPanel> flowPanels) {
