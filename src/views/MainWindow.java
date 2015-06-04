@@ -92,8 +92,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         setVisible(true);
     }
 
-    ;
-
+    //open log file pressed
     private void openLogFiles() {
         final JFileChooser fc = new JFileChooser();
         if (directory != null && Files.exists(Paths.get(directory))) {
@@ -414,6 +413,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
                 undoQueue.addState(state);
                 undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
             }
+        } else {
             if (PreferencesHelper.isRepositioningAllowed())
                 moveViewToTheStart(arrowsAdded);
         }
@@ -451,6 +451,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             moveViewToPosition(position);
     }
 
+    //Moves the view to the most left top position of the arrows added after clicking the event
     private void moveViewToTheStart(List<Arrow> arrowsAdded) {
         Point position = ArrowHandler.instance().getMostLeftAndTopPositionForArrows(arrowsAdded);
         position = new Point(position.x - 50, position.y - 50);

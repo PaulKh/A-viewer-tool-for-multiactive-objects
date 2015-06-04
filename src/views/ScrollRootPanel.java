@@ -24,7 +24,9 @@ public class ScrollRootPanel extends JPanel {
         for (Arrow arrow : ArrowHandler.instance().getArrows()) {
             int x1 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getRequestSentTime()) + flowX;
             int x2 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getDerivedTime()) + flowX;
-            drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
+            if (!(x1 <= 0 || x1 >= SizeHelper.instance().getTotalLength() || x2 <= 0 || x2 >= SizeHelper.instance().getTotalLength()))
+                drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
+
         }
     }
 

@@ -44,8 +44,7 @@ public class SizeHelper {
         }
         this.minimumTime = tempMinimumTime;
         this.maximumTime = tempMaximumTime;
-        this.scale = scale;
-        length = (int) (maximumTime - minimumTime) * scale / 1000;
+        setScale(scale);
     }
 
     public long getMinimumTime() {
@@ -62,7 +61,7 @@ public class SizeHelper {
 
     public void setScale(int scale) {
         this.scale = scale;
-        length = (int) (maximumTime - minimumTime) * scale / 1000;
+        length = (int) ((maximumTime - minimumTime) / 1000) * scale;
     }
 
     public int getLength() {
