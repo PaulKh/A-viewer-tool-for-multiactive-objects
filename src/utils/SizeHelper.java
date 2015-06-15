@@ -39,6 +39,9 @@ public class SizeHelper {
                     if (threadEvent.getFinishTime() > tempMaximumTime) {
                         tempMaximumTime = threadEvent.getFinishTime();
                     }
+                    if (threadEvent.getStartTime() + 50 > tempMaximumTime) {
+                        tempMaximumTime = threadEvent.getStartTime() + 50;
+                    }
                 }
             }
         }

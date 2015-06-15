@@ -21,7 +21,10 @@ public class ThreadEvent {
     public ThreadEvent(long sequenceNumber, ActiveObjectThread thread) {
         this.sequenceNumber = sequenceNumber;
         this.thread = thread;
-        localUniqueId = counter++;
+        localUniqueId = updateCounter();
+    }
+    private synchronized int updateCounter(){
+        return counter++;
     }
 
     public long getStartTime() {
