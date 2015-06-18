@@ -3,14 +3,14 @@ package utils;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.ErrorEntity;
-import supportModel.ParsedData;
+import supportModel.*;
 import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.deserializedData.DeserializedRequestSent;
 import supportModel.deserializedData.DeserializedRequestsDelivered;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by pkhvoros on 4/2/15.
@@ -20,6 +20,7 @@ public class DataHelper {
     private DataParser dataParser;
     private List<ErrorEntity> errorEntities;
     private List<ActiveObject> activeObjects;
+    private long maximumTime = 0, minimumTime = Long.MAX_VALUE;
 
     public DataHelper(String directory) {
         long time = System.currentTimeMillis();
@@ -38,7 +39,6 @@ public class DataHelper {
                 + "\nnumber of delivery " + parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().size()
                 + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size()
                 + "\nevents count = " + counter + "\n");
-
     }
 
     private void saturateActiveObjectsWithRequests(ParsedData parsedData) {
@@ -47,39 +47,51 @@ public class DataHelper {
         enrichThreadEvent(parsedData);
     }
 
-    //The method updates the values of when request has been delivered, sent and who was the sender
+//The method updates the values of when request has been delivered, sent and who was the sender
 //In other words it is the merging of two different types of logs. One about the activeobject and the other is about request delivery info.
     private void enrichThreadEvent(ParsedData parsedData) {
         for (ActiveObject activeObject : activeObjects) {
             for (ActiveObjectThread thread : activeObject.getThreads()) {
                 for (ThreadEvent threadEvent : thread.getEvents()) {
-
+                    setMaxMinForThreadEvent(threadEvent);
                     DeserializedRequestsDelivered delivered = parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().get(threadEvent.getId());
-                    if (delivered != null)
-                        setDerivedTime(threadEvent, delivered);
                     DeserializedRequestSent sent = parsedData.getDeserializedRequestData().getDeserializedSendRequestData().get(threadEvent.getId());
-                    if (sent != null)
-                        setRequestSent(threadEvent, sent);
+                    if (delivered != null) {
+                        threadEvent.setDerivedTime(delivered.getTimeStamp());
+                    }
+                    if (sent != null) {
+                        threadEvent.setRequestSentTime(sent.getTimeStamp());
+                        threadEvent.setSenderThreadId(sent.getThreadId());
+                        addArrows(sent, threadEvent);
+                        parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().remove(threadEvent.getId());
+                        parsedData.getDeserializedRequestData().getDeserializedSendRequestData().remove(threadEvent.getId());
+                    }
                 }
             }
         }
+        addNotCompletedArrows(parsedData);
+        setMaxForNotCompletedEvents(parsedData);
     }
-
-    private void setRequestSent(ThreadEvent threadEvent, DeserializedRequestEntity requestData) {
-        threadEvent.setRequestSentTime(requestData.getTimeStamp());
-        threadEvent.setSenderThreadId(requestData.getThreadId());
+    private void addNotCompletedArrows(ParsedData parsedData){
+        for (Map.Entry<String, DeserializedRequestSent> requestSentTuple: parsedData.getDeserializedRequestData().getDeserializedSendRequestData().entrySet()){
+            String key = requestSentTuple.getKey();
+            DeserializedRequestsDelivered deliveredRequest = parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().get(key);
+            if (deliveredRequest == null)
+                continue;
+            DeserializedRequestSent requestSent = requestSentTuple.getValue();
+            ActiveObject senderActiveObject = findActiveObjectWithId(requestSent.getSenderIdentifier());
+            ActiveObjectThread senderThread = findThreadById(senderActiveObject, requestSent.getThreadId());
+            ThreadEvent callerEvent = senderThread.findThreadEventByTime(requestSent.getTimeStamp());
+            callerEvent.addArrow(new NotCompleteArrow(callerEvent, requestSent.getTimeStamp(), deliveredRequest.getTimeStamp(), findActiveObjectWithId(deliveredRequest.getReceiverIdentifier())));
+        }
     }
-
-    private void setDerivedTime(ThreadEvent threadEvent, DeserializedRequestsDelivered requestData) {
-        threadEvent.setDerivedTime(requestData.getTimeStamp());
-    }
-
-    public List<ErrorEntity> getErrorEntities() {
-        return errorEntities;
-    }
-
-    public List<ActiveObject> getActiveObjects() {
-        return activeObjects;
+    private void addArrows(DeserializedRequestSent sent, ThreadEvent threadEvent){
+        ActiveObject senderActiveObject = findActiveObjectWithId(sent.getSenderIdentifier());
+        ActiveObjectThread senderThread = findThreadById(senderActiveObject, sent.getThreadId());
+        ThreadEvent callerEvent = senderThread.findThreadEventByTime(sent.getTimeStamp());
+        Arrow arrow = new CompleteArrow(callerEvent, threadEvent);
+        threadEvent.addArrow(arrow);
+        callerEvent.addArrow(arrow);
     }
 
     //This method identifies threadEvents which were called by the given thread event
@@ -98,5 +110,68 @@ public class DataHelper {
             }
         }
         return threadEvents;
+    }
+    private void setMaxForNotCompletedEvents(ParsedData parsedData){
+        for (DeserializedRequestSent sent:parsedData.getDeserializedRequestData().getDeserializedSendRequestData().values()){
+            if (sent.getTimeStamp() > maximumTime)
+                maximumTime = sent.getTimeStamp();
+        }
+        for (DeserializedRequestsDelivered delivered:parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().values()){
+            if (delivered.getTimeStamp() > maximumTime)
+                maximumTime = delivered.getTimeStamp();
+        }
+    }
+    private void setMaxMinForThreadEvent(ThreadEvent threadEvent){
+        if (threadEvent.getStartTime() < minimumTime) {
+            minimumTime = threadEvent.getStartTime();
+        }
+        if (threadEvent.getFinishTime() > maximumTime) {
+            maximumTime = threadEvent.getFinishTime();
+        }
+        if (threadEvent.getStartTime() + 50 > maximumTime) {
+            maximumTime = threadEvent.getStartTime() + 50;
+        }
+    }
+    private void setRequestSent(ThreadEvent threadEvent, DeserializedRequestEntity requestData) {
+        threadEvent.setRequestSentTime(requestData.getTimeStamp());
+        threadEvent.setSenderThreadId(requestData.getThreadId());
+    }
+
+    private void setDerivedTime(ThreadEvent threadEvent, DeserializedRequestsDelivered requestData) {
+        threadEvent.setDerivedTime(requestData.getTimeStamp());
+    }
+
+    public List<ErrorEntity> getErrorEntities() {
+        return errorEntities;
+    }
+
+    public List<ActiveObject> getActiveObjects() {
+        return activeObjects;
+    }
+
+    private ActiveObject findActiveObjectWithId(String activeObjectId){
+        for (ActiveObject innerActiveObject: activeObjects){
+            if (innerActiveObject.getIdentifier().equals(activeObjectId)){
+                return innerActiveObject;
+            }
+        }
+        return null;
+    }
+
+    private ActiveObjectThread findThreadById(ActiveObject activeObject, int threadId){
+        for (ActiveObjectThread innerThread:activeObject.getThreads()){
+            if (innerThread.getThreadId() == threadId){
+                return innerThread;
+            }
+        }
+        return null;
+    }
+
+    public long getMaximumTime() {
+        return maximumTime;
+    }
+
+    public long getMinimumTime() {
+        return minimumTime;
     }
 }

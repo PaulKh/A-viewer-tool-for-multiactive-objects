@@ -1,6 +1,6 @@
 package views;
 
-import supportModel.Arrow;
+import supportModel.ArrowWithPosition;
 import utils.ArrowHandler;
 import utils.SizeHelper;
 
@@ -21,9 +21,9 @@ public class ScrollRootPanel extends JPanel {
     @Override
     public void paint(Graphics g1) {
         super.paint(g1);
-        for (Arrow arrow : ArrowHandler.instance().getArrows()) {
-            int x1 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getRequestSentTime()) + flowX;
-            int x2 = SizeHelper.instance().convertTimeToLength(arrow.getDestinationThreadEvent().getDerivedTime()) + flowX;
+        for (ArrowWithPosition arrow : ArrowHandler.instance().getArrows()) {
+            int x1 = SizeHelper.instance().convertTimeToLength(arrow.getArrow().getSentTime()) + flowX;
+            int x2 = SizeHelper.instance().convertTimeToLength(arrow.getArrow().getDeliveredTime()) + flowX;
             if (!(x1 <= 0 || x1 >= SizeHelper.instance().getTotalLength() || x2 <= 0 || x2 >= SizeHelper.instance().getTotalLength()))
                 drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
 

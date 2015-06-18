@@ -1,9 +1,11 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
+import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.Arrow;
+import supportModel.ArrowWithPosition;
+import supportModel.CompleteArrow;
 import supportModel.RectangleWithThreadEvent;
 import utils.ArrowHandler;
 import utils.SizeHelper;
@@ -12,6 +14,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,7 +62,7 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
         int counter = 0;
         for (RectangleWithThreadEvent rect : rectangles) {
             counter++;
-            if (rect.getThreadEvent().getFinishTime() <= 0) {
+            if (!rect.getThreadEvent().isEventLastsAnyTime()) {
                 g.setColor(new Color(255, 0, 0));
             } else if (counter % 2 == 0) {
                 g.setColor(new Color(128, 205, 255));
@@ -135,12 +138,14 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
         for (RectangleWithThreadEvent rect : rectangles) {
             rect.setHighlighted(false);
         }
-        for (Arrow arrow : ArrowHandler.instance().getArrows()) {
+        for (ArrowWithPosition arrow : ArrowHandler.instance().getArrows()) {
             for (RectangleWithThreadEvent rect : rectangles) {
-                if (rect.getThreadEvent() == arrow.getSourceThreadEvent()) {
+                if (rect.getThreadEvent() == arrow.getArrow().getSourceThreadEvent()) {
                     rect.setHighlighted(true);
-                } else if (rect.getThreadEvent() == arrow.getDestinationThreadEvent()) {
-                    rect.setHighlighted(true);
+                } else if (arrow.getArrow() instanceof CompleteArrow){
+                    if(rect.getThreadEvent() == ((CompleteArrow) arrow.getArrow()).getDestinationThreadEvent()){
+                        rect.setHighlighted(true);
+                    }
                 }
             }
         }
@@ -160,6 +165,11 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
 
     @Override
     public List<ThreadEvent> getAllThreadEvents() {
-        return this.activeObjectThread.getEvents();
+        return new ArrayList<>(this.activeObjectThread.getEvents());
+    }
+
+    @Override
+    public ActiveObject getActiveObject() {
+        return activeObjectThread.getActiveObject();
     }
 }

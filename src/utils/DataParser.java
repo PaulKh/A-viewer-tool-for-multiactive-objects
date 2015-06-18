@@ -204,8 +204,9 @@ public class DataParser {
             if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStarted) {
                 event.setStartTime(deserializedLoggedData.getTimeStamp());
                 event.setMethodName(deserializedLoggedData.getMethodName());
-                if (oldAndNewAOIdsKeyValuePairs.containsKey(deserializedLoggedData.getSender()))
-                    event.setSenderActiveObjectId(oldAndNewAOIdsKeyValuePairs.get(deserializedLoggedData.getSender()));
+                String senderId = locateOrGenerateIdentifierFromKey(deserializedLoggedData.getSender());
+//                if (oldAndNewAOIdsKeyValuePairs.containsKey(deserializedLoggedData.getSender()))
+                    event.setSenderActiveObjectId(senderId);
                 startedButNotFinishedEvents.add(new StartedButNotFinishedEvent(thread, event));
                 thread.addThreadEvent(event);
             } else if (deserializedLoggedData.getTypeOfRequest() == TypeOfRequest.ServeStopped) {

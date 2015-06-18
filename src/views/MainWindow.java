@@ -12,7 +12,7 @@ import enums.ViewPositionPolicyEnum;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
-import supportModel.Arrow;
+import supportModel.ArrowWithPosition;
 import supportModel.ErrorEntity;
 import supportModel.OrderStateOfActiveObjects;
 import utils.*;
@@ -55,10 +55,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         ArrowHandler.instance().clearAll();
         dataHelper = new DataHelper(directory);
         activeObjects = dataHelper.getActiveObjects();
-
         showErrorMessage(dataHelper.getErrorEntities());
-
-        discoverMinimumAndMaximum();
+        discoverMinimumAndMaximum(dataHelper);
         buildMainView();
     };
     private SwapActiveObjectsQueue undoQueue = new SwapActiveObjectsQueue();
@@ -227,8 +225,8 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         }
     }
 
-    private void discoverMinimumAndMaximum() {
-        SizeHelper.instance().setMaxMinScale(activeObjects, scaleSlider.getValue());
+    private void discoverMinimumAndMaximum(DataHelper dataHelper) {
+        SizeHelper.instance().setMaxMinScale(dataHelper.getMaximumTime(), dataHelper.getMinimumTime(), scaleSlider.getValue());
     }
 
     private void buildMainView() {
@@ -404,7 +402,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
     @Override
     public void threadEventClicked(ThreadEvent threadEvent) {
-        List<Arrow> arrowsAdded = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels, dataHelper);
+        List<ArrowWithPosition> arrowsAdded = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels);
         List<ActiveObject> activeObjectsInvolved = ArrowHandler.instance().getAllActiveObjectsFromArrows(arrowsAdded);
         if (PreferencesHelper.getReorderingPolicy() == OrderingPolicyEnum.ENABLED && arrowsAdded.size() != 0) {
             OrderStateOfActiveObjects state = undoQueue.generateStateByActiveObjects(activeObjects);
@@ -444,7 +442,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         updateView(positionPolicyEnum, null);
     }
 
-    private void updateView(ViewPositionPolicyEnum positionPolicyEnum, List<Arrow> arrowsAdded) {
+    private void updateView(ViewPositionPolicyEnum positionPolicyEnum, List<ArrowWithPosition> arrowsAdded) {
         Point position = new Point(mainScrollPane.getHorizontalScrollBar().getValue(), mainScrollPane.getVerticalScrollBar().getValue());
         buildMainView();
         ArrowHandler.instance().updateArrows(flowPanels);
@@ -455,7 +453,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     //Moves the view to the most left top position of the arrows added after clicking the event
-    private void moveViewToTheStart(List<Arrow> arrowsAdded) {
+    private void moveViewToTheStart(List<ArrowWithPosition> arrowsAdded) {
         Point position = ArrowHandler.instance().getMostLeftAndTopPositionForArrows(arrowsAdded);
         position = new Point(position.x - 50, position.y - 50);
         moveViewToPosition(position);

@@ -98,4 +98,9 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
         return resultEvents;
     }
 
+    @Override
+    public ActiveObject getActiveObject() {
+        return activeObject;
+    }
+
 }

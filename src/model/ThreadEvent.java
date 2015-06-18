@@ -1,5 +1,11 @@
 package model;
 
+import supportModel.Arrow;
+import supportModel.ArrowWithPosition;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by pkhvoros on 3/13/15.
  */
@@ -17,6 +23,7 @@ public class ThreadEvent {
     private long requestSentTime;
     private int senderThreadId;
     private ActiveObjectThread thread;
+    private List<Arrow> arrows = new ArrayList<>();
 
     public ThreadEvent(long sequenceNumber, ActiveObjectThread thread) {
         this.sequenceNumber = sequenceNumber;
@@ -97,5 +104,17 @@ public class ThreadEvent {
 
     public String getUniqueMethodName() {
         return methodName + "_" + localUniqueId;
+    }
+
+    public List<Arrow> getArrows() {
+        return arrows;
+    }
+
+    public void addArrow(Arrow arrow) {
+        this.arrows.add(arrow);
+    }
+
+    public boolean isEventLastsAnyTime(){
+        return finishTime - startTime >= 0;
     }
 }

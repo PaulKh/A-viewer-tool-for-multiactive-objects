@@ -1,7 +1,9 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by pkhvoros on 3/13/15.
@@ -41,12 +43,12 @@ public class ActiveObjectThread {
         }
     }
 
-    public ThreadEvent getThreadEvent(long id) {
-        for (ThreadEvent event : events)
-            if (event.getSequenceNumber() == id)
-                return event;
-        return null;
-    }
+//    public ThreadEvent getThreadEvent(long id) {
+//        for (ThreadEvent event : events)
+//            if (event.getSequenceNumber() == id)
+//                return event;
+//        return null;
+//    }
 
     public List<ThreadEvent> getEvents() {
         return events;
@@ -54,5 +56,14 @@ public class ActiveObjectThread {
 
     public ActiveObject getActiveObject() {
         return activeObject;
+    }
+
+    public ThreadEvent findThreadEventByTime(long time){
+        for(ThreadEvent threadEvent:events){
+            if ((time >= threadEvent.getStartTime() && time <= threadEvent.getFinishTime()) || !threadEvent.isEventLastsAnyTime()){
+                return threadEvent;
+            }
+        }
+        return null;
     }
 }

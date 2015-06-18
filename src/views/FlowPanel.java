@@ -1,6 +1,7 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
+import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
 import supportModel.RectangleWithThreadEvent;
@@ -65,6 +66,8 @@ public abstract class FlowPanel extends JPanel {
     public abstract boolean containsSourceThreadForEvent(ThreadEvent threadEvent);
 
     public abstract List<ThreadEvent> getAllThreadEvents();
+
+    public abstract ActiveObject getActiveObject();
 
     public void deHighlightAllTheRectangles() {
         for (RectangleWithThreadEvent rect : rectangles) {

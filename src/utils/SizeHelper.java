@@ -27,26 +27,9 @@ public class SizeHelper {
         return sizeHelper;
     }
 
-    public void setMaxMinScale(List<ActiveObject> activeObjects, int scale) {
-        long tempMinimumTime = Long.MAX_VALUE;
-        long tempMaximumTime = 0;
-        for (ActiveObject activeObject : activeObjects) {
-            for (ActiveObjectThread thread : activeObject.getThreads()) {
-                for (ThreadEvent threadEvent : thread.getEvents()) {
-                    if (threadEvent.getStartTime() < tempMinimumTime) {
-                        tempMinimumTime = threadEvent.getStartTime();
-                    }
-                    if (threadEvent.getFinishTime() > tempMaximumTime) {
-                        tempMaximumTime = threadEvent.getFinishTime();
-                    }
-                    if (threadEvent.getStartTime() + 50 > tempMaximumTime) {
-                        tempMaximumTime = threadEvent.getStartTime() + 50;
-                    }
-                }
-            }
-        }
-        this.minimumTime = tempMinimumTime;
-        this.maximumTime = tempMaximumTime;
+    public void setMaxMinScale(long maxValue, long minValue, int scale) {
+        this.maximumTime = maxValue + 50;
+        this.minimumTime = minValue;
         setScale(scale);
     }
 
@@ -90,7 +73,7 @@ public class SizeHelper {
     }
 
     public boolean didEventHappendBetweenMinAndMax(long time){
-        return time > minimumTime && time < maximumTime;
+        return time >= minimumTime && time <= maximumTime;
     }
 
 }
