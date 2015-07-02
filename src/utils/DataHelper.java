@@ -80,13 +80,17 @@ public class DataHelper {
                 continue;
             DeserializedRequestSent requestSent = requestSentTuple.getValue();
             ActiveObject senderActiveObject = findActiveObjectWithId(requestSent.getSenderIdentifier());
-            ActiveObjectThread senderThread = findThreadById(senderActiveObject, requestSent.getThreadId());
-            ThreadEvent callerEvent = senderThread.findThreadEventByTime(requestSent.getTimeStamp());
-            callerEvent.addArrow(new NotCompleteArrow(callerEvent, requestSent.getTimeStamp(), deliveredRequest.getTimeStamp(), findActiveObjectWithId(deliveredRequest.getReceiverIdentifier())));
+            if(senderActiveObject != null){
+                ActiveObjectThread senderThread = findThreadById(senderActiveObject, requestSent.getThreadId());
+                ThreadEvent callerEvent = senderThread.findThreadEventByTime(requestSent.getTimeStamp());
+                callerEvent.addArrow(new NotCompleteArrow(callerEvent, requestSent.getTimeStamp(), deliveredRequest.getTimeStamp(), findActiveObjectWithId(deliveredRequest.getReceiverIdentifier())));
+            }
         }
     }
     private void addArrows(DeserializedRequestSent sent, ThreadEvent threadEvent){
         ActiveObject senderActiveObject = findActiveObjectWithId(sent.getSenderIdentifier());
+        if (senderActiveObject == null)
+            return;
         ActiveObjectThread senderThread = findThreadById(senderActiveObject, sent.getThreadId());
         ThreadEvent callerEvent = senderThread.findThreadEventByTime(sent.getTimeStamp());
         Arrow arrow = new CompleteArrow(callerEvent, threadEvent);
