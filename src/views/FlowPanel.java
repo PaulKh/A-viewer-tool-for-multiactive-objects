@@ -1,6 +1,7 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
+import enums.HighlithedStatus;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
@@ -71,7 +72,8 @@ public abstract class FlowPanel extends JPanel {
 
     public void deHighlightAllTheRectangles() {
         for (RectangleWithThreadEvent rect : rectangles) {
-            rect.setHighlighted(false);
+            rect.setDependencyHighlightedStatus(false);
+            rect.setCompatibilityHighlightedStatus(false);
         }
     }
 }

@@ -1,6 +1,8 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
+import enums.HighlithedStatus;
+import enums.MenuItemType;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
@@ -8,12 +10,12 @@ import supportModel.ArrowWithPosition;
 import supportModel.CompleteArrow;
 import supportModel.RectangleWithThreadEvent;
 import utils.ArrowHandler;
+import utils.CompatibilityHelper;
 import utils.SizeHelper;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,24 +40,71 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
-                if (rect != null && callback != null) {
-                    callback.threadEventClicked(rect.getThreadEvent());
-                } else {
-                    rect = getRectangleContainingPoint(e, 5);
-                    if (rect != null && callback != null) {
-                        callback.threadEventClicked(rect.getThreadEvent());
-                    }
-                }
                 long time = SizeHelper.instance().convertLengthToTime(e.getX());
                 if (callback != null) {
                     callback.threadClicked(activeObjectThread.getActiveObject(), time);
                 }
             }
+            @Override
+            public void mousePressed(MouseEvent e){
+                if (e.isPopupTrigger())
+                    popContextMenu(e);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e){
+                if (e.isPopupTrigger())
+                    popContextMenu(e);
+            }
         });
     }
 
+    private void popContextMenu(MouseEvent e){
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem showDependenciesMenuItem = new JMenuItem("Show dependencies");
+        JMenuItem showCompatibilityInfo = new JMenuItem("Show compatibility info");
+        popupMenu.add(showDependenciesMenuItem);
+        popupMenu.add(showCompatibilityInfo);
 
+        showDependenciesMenuItem.addActionListener(new MenuActionListener(MenuItemType.DEPENDENCIES, e));
+        showCompatibilityInfo.addActionListener(new MenuActionListener(MenuItemType.COMPATIBILITY, e));
+        if (CompatibilityHelper.instance().getEventForKey(getActiveObject()) != null){
+            JMenuItem removeCompatibilityHighlight = new JMenuItem("Remove compatibility highlight");
+            popupMenu.add(removeCompatibilityHighlight);
+            removeCompatibilityHighlight.addActionListener(e1 -> {
+                if (callback != null){
+                    callback.removeCompatibilityClicked(getActiveObject());
+                }
+            });
+        }
+        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+//        showDependenciesMenuItem.addActionListener();
+    }
+
+    private class MenuActionListener implements ActionListener {
+        private MenuItemType menuItemType;
+        private MouseEvent mouseEvent;
+
+        public MenuActionListener(MenuItemType menuItemType, MouseEvent mouseEvent) {
+            this.menuItemType = menuItemType;
+            this.mouseEvent = mouseEvent;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            RectangleWithThreadEvent rect = getRectangleContainingPoint(mouseEvent, 0);
+            if (rect != null && callback != null) {
+                clickEvent(rect);
+            } else {
+                rect = getRectangleContainingPoint(mouseEvent, 5);
+                if (rect != null && callback != null) {
+                    clickEvent(rect);
+                }
+            }
+        }
+        private void clickEvent(RectangleWithThreadEvent rect){
+            callback.threadEventClicked(menuItemType, rect.getThreadEvent());
+        }
+    }
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -70,8 +119,8 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
                 g.setColor(new Color(255, 248, 57));
             }
             g.fillRect(rect.getRectangle().x, rect.getRectangle().y, rect.getRectangle().width, rect.getRectangle().height);
-            if (rect.isHighlighted())
-                drawHighlightedRectangle(g, rect.getRectangle());
+            if (rect.getHighlithedStatus() != HighlithedStatus.NONE)
+                drawHighlightedRectangle(g, rect);
 //            else{
 //               g.fillRect(rect.getRectangle().x, rect.getRectangle().y, sizeHelper.getLength() - rect.getRectangle().x, rect.getRectangle().height);
 //            }
@@ -119,38 +168,56 @@ public class ThreadFlowPanel extends FlowPanel implements MouseMotionListener {
         return activeObjectThread;
     }
 
-    private void drawHighlightedRectangle(Graphics g, Rectangle rect) {
-        g.setColor(Color.ORANGE);
+    private void drawHighlightedRectangle(Graphics g, RectangleWithThreadEvent rect) {
+        Rectangle rectangle = rect.getRectangle();
+//        g.setColor(rect.getHighlithedStatus().getColor());
 //        Graphics2D g2 = (Graphics2D) g;
 //        float thickness = 20;
 //        Stroke oldStroke = g2.getStroke();
 //        g2.setStroke(new BasicStroke(thickness));
         int thickness = 8;
+        Color c = rect.getHighlithedStatus().getColor();
         for (int i = 0; i < thickness; i++) {
-            g.setColor(new Color(255, 143, 20, (255 * (thickness - i)) / thickness));
-            g.drawRect(rect.x + i, rect.y + i, rect.width - (i * 2), rect.height - (i * 2));
+            g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), (255 * (thickness - i)) / thickness));
+            g.drawRect(rectangle.x + i, rectangle.y + i, rectangle.width - (i * 2), rectangle.height - (i * 2));
         }
 //        g2.setStroke(oldStroke);
 
     }
-
+    public void removeCompatibilityHighlight(){
+        for (RectangleWithThreadEvent rectangleWithThreadEvent:rectangles){
+            rectangleWithThreadEvent.setCompatibilityHighlightedStatus(false);
+        }
+    }
     public void setHighlightedEvent() {
         for (RectangleWithThreadEvent rect : rectangles) {
-            rect.setHighlighted(false);
+            rect.setDependencyHighlightedStatus(false);
         }
         for (ArrowWithPosition arrow : ArrowHandler.instance().getArrows()) {
             for (RectangleWithThreadEvent rect : rectangles) {
                 if (rect.getThreadEvent() == arrow.getArrow().getSourceThreadEvent()) {
-                    rect.setHighlighted(true);
+                    rect.setDependencyHighlightedStatus(true);
                 } else if (arrow.getArrow() instanceof CompleteArrow){
                     if(rect.getThreadEvent() == ((CompleteArrow) arrow.getArrow()).getDestinationThreadEvent()){
-                        rect.setHighlighted(true);
+                        rect.setDependencyHighlightedStatus(true);
                     }
                 }
             }
         }
     }
-
+    public void highlightCompatibility(ThreadEvent threadEvent){
+        for (RectangleWithThreadEvent rectangleWithThreadEvent:rectangles){
+            rectangleWithThreadEvent.setCompatibilityHighlightedStatus(false);
+        }
+        ActiveObject activeObject = this.activeObjectThread.getActiveObject();
+        for (RectangleWithThreadEvent rectangleWithThreadEvent:rectangles){
+            if (!threadEvent.equals(rectangleWithThreadEvent.getThreadEvent())){
+                if (activeObject.areEventsCompatible(threadEvent, rectangleWithThreadEvent.getThreadEvent())){
+                    rectangleWithThreadEvent.setCompatibilityHighlightedStatus(true);
+                }
+            }
+        }
+    }
     @Override
     public boolean containsThread(ActiveObjectThread thread) {
         return thread.equals(activeObjectThread);

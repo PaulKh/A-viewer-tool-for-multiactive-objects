@@ -7,6 +7,7 @@ import callbacks.UpButtonPressedCallback;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import enums.MenuItemType;
 import enums.OrderingPolicyEnum;
 import enums.ViewPositionPolicyEnum;
 import model.ActiveObject;
@@ -116,7 +117,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             activeObjects = undoQueue.undo(activeObjects);
             undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
             updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
-            highlighThreadEvents();
+            highlightDependencyThreadEvents();
         });
     }
 
@@ -401,24 +402,39 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     @Override
-    public void threadEventClicked(ThreadEvent threadEvent) {
-        List<ArrowWithPosition> arrowsAdded = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels);
-        List<ActiveObject> activeObjectsInvolved = ArrowHandler.instance().getAllActiveObjectsFromArrows(arrowsAdded);
-        if (PreferencesHelper.getReorderingPolicy() == OrderingPolicyEnum.ENABLED && arrowsAdded.size() != 0) {
-            OrderStateOfActiveObjects state = undoQueue.generateStateByActiveObjects(activeObjects);
-            if (reorderActiveObjectsDependingOnSelected(activeObjectsInvolved)) {
-                updateView(ViewPositionPolicyEnum.TO_THE_START, arrowsAdded);
-                undoQueue.addState(state);
-                undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
-            } else {
-                if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
-                    moveViewToTheStart(arrowsAdded);
-            }
-        } else {
-            if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
-                moveViewToTheStart(arrowsAdded);
+    public void threadEventClicked(MenuItemType menuItemType, ThreadEvent threadEvent) {
+        switch (menuItemType) {
+            case DEPENDENCIES:
+                List<ArrowWithPosition> arrowsAdded = ArrowHandler.instance().addArrowsForEvent(threadEvent, flowPanels);
+                List<ActiveObject> activeObjectsInvolved = ArrowHandler.instance().getAllActiveObjectsFromArrows(arrowsAdded);
+                if (PreferencesHelper.getReorderingPolicy() == OrderingPolicyEnum.ENABLED && arrowsAdded.size() != 0) {
+                    OrderStateOfActiveObjects state = undoQueue.generateStateByActiveObjects(activeObjects);
+                    if (reorderActiveObjectsDependingOnSelected(activeObjectsInvolved)) {
+                        updateView(ViewPositionPolicyEnum.TO_THE_START, arrowsAdded);
+                        undoQueue.addState(state);
+                        undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
+                    } else {
+                        if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
+                            moveViewToTheStart(arrowsAdded);
+                    }
+                } else {
+                    if (PreferencesHelper.isRepositioningAllowed() && arrowsAdded.size() != 0)
+                        moveViewToTheStart(arrowsAdded);
+                }
+                highlightDependencyThreadEvents();
+                break;
+            case COMPATIBILITY:
+                for (FlowPanel flowPanel : flowPanels) {
+                    if (flowPanel instanceof ThreadFlowPanel) {
+                        if (flowPanel.getActiveObject().equals(threadEvent.getThread().getActiveObject())) {
+                            ((ThreadFlowPanel) flowPanel).highlightCompatibility(threadEvent);
+                        }
+                    }
+                }
+                CompatibilityHelper.instance().addTuple(threadEvent.getThread().getActiveObject(), threadEvent);
+                break;
         }
-        highlighThreadEvents();
+
         updateClearButton();
         scrollPaneRoot.revalidate();
         scrollPaneRoot.repaint();
@@ -426,7 +442,21 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
     @Override
     public void threadClicked(ActiveObject activeObject, long timeClicked) {
-        QueuesDialogBuilder.buildQueueDialog(this, activeObject, timeClicked);
+        new QueuesDialogBuilder().buildQueueDialog(this, activeObject, timeClicked);
+    }
+
+    @Override
+    public void removeCompatibilityClicked(ActiveObject activeObject) {
+        for (FlowPanel flowPanel : flowPanels) {
+            if (flowPanel instanceof ThreadFlowPanel) {
+                if (flowPanel.getActiveObject().equals(activeObject)) {
+                    ((ThreadFlowPanel) flowPanel).removeCompatibilityHighlight();
+                }
+            }
+        }
+        CompatibilityHelper.instance().removeTuple(activeObject);
+        scrollPaneRoot.revalidate();
+        scrollPaneRoot.repaint();
     }
 
     @Override
@@ -435,7 +465,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         undoReorderingButton.setEnabled(!undoQueue.isQueueEmpty());
         Collections.swap(activeObjects, activeObjects.indexOf(button.getActiveObject1()), activeObjects.indexOf(button.getActiveObject2()));
         updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
-        highlighThreadEvents();
+        highlightDependencyThreadEvents();
     }
 
     private void updateView(ViewPositionPolicyEnum positionPolicyEnum) {
@@ -467,7 +497,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
     }
 
     // highlights events selected by user and all dependent
-    private void highlighThreadEvents() {
+    private void highlightDependencyThreadEvents() {
         for (FlowPanel threadFlowPanel : flowPanels) {
             if (threadFlowPanel instanceof ThreadFlowPanel)
                 ((ThreadFlowPanel) threadFlowPanel).setHighlightedEvent();
@@ -508,7 +538,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         this.activeObjects.remove(activeObject);
         this.activeObjects.add(0, activeObject);
         updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
-        highlighThreadEvents();
+        highlightDependencyThreadEvents();
     }
 
     @Override
@@ -517,7 +547,7 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
             lockedObjects.remove(activeObject);
         } else lockedObjects.add(activeObject);
         updateView(ViewPositionPolicyEnum.KEEP_ON_THE_CURRENT_PLACE);
-        highlighThreadEvents();
+        highlightDependencyThreadEvents();
     }
 
     {

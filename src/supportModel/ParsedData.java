@@ -12,6 +12,8 @@ import java.util.List;
  */
 //This class represents all the information parsed from the logs
 public class ParsedData {
+
+    //request send, delivered information
     DeserializedRequestData deserializedRequestData = new DeserializedRequestData();
     //information about active objects
     List<ActiveObject> activeObjects;

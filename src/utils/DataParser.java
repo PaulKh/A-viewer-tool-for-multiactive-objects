@@ -6,6 +6,7 @@ import exceptions.WreckedFileException;
 import exceptions.WrongLogFileFormatException;
 import model.ActiveObject;
 import model.ActiveObjectThread;
+import model.Group;
 import model.ThreadEvent;
 import supportModel.ErrorEntity;
 import supportModel.ParsedData;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +42,7 @@ public class DataParser {
 
     public ParsedData parseData(String sourceDirectory) {
         ParsedData parsedData = new ParsedData();
+        List<WrappedCompatibilityInformation> wrappedCompatibilityInformationList = new ArrayList<>();
         List<DeserializedActiveObject> deserializedAOs = new CopyOnWriteArrayList<DeserializedActiveObject>();
         List<ErrorEntity> errorEntities = new CopyOnWriteArrayList<>();
         List<Thread> threads = new ArrayList<>();
@@ -58,7 +61,12 @@ public class DataParser {
                                     WrappedRequestWithError wrappedRequestWithError = readRequestFile(filePath);
                                     errorEntities.addAll(wrappedRequestWithError.getErrorEntities());
                                     parsedData.addRequestEntities(wrappedRequestWithError.getRequestData());
-                                } else {
+                                } else if (filePath.getFileName().toString().startsWith("Compatibility")){
+                                    WrappedCompatibilityInformation compatibilityInformation = readComapatibilityFile(filePath);
+                                    wrappedCompatibilityInformationList.add(compatibilityInformation);
+                                    errorEntities.addAll(compatibilityInformation.getErrorEntities());
+                                }
+                                else {
                                     errorEntities.add(generateWreckedWrongFileErrorEntity(filePath.toString(), Error.WrongFileFormat));
                                 }
                             } catch (WrongLogFileFormatException exception) {
@@ -88,11 +96,60 @@ public class DataParser {
             activeObjects.add(activeObjectWithError.getActiveObject());
             errorEntities.addAll(activeObjectWithError.getErrorEntities());
         }
+        enrichActiveObjectWithCompatibility(wrappedCompatibilityInformationList, activeObjects);
         parsedData.setActiveObjects(activeObjects);
         parsedData.addAllErrorEntities(errorEntities);
         return parsedData;
     }
+    private WrappedCompatibilityInformation readComapatibilityFile(Path path){
+        WrappedCompatibilityInformation compatibilityInformation = new WrappedCompatibilityInformation();
+        CompatibilityStatusParsing statusParsing = CompatibilityStatusParsing.NONE;
 
+
+        try {
+            try (BufferedReader br = new BufferedReader(new FileReader(path.toString()))) {
+                String line;
+                String firstLine = br.readLine();
+                if (firstLine != null)
+                    compatibilityInformation.setActiveObjectId(locateOrGenerateIdentifierFromKey(firstLine));
+                else
+                    return null;
+                List<WrappedMethod> wrappedMethods = new ArrayList<>();
+                List<WrappedGroup> wrappedGroups = new ArrayList<>();
+                while ((line = br.readLine()) != null) {
+                    if (line.equals("compatibility")){
+                        statusParsing = CompatibilityStatusParsing.GROUP_COMPATIBILITY;
+                        continue;
+                    }
+                    else if(line.equals("methods")){
+                        statusParsing = CompatibilityStatusParsing.METHOD_OWNED;
+                        continue;
+                    }
+                    else{
+                        try {
+                            switch (statusParsing){
+                                case METHOD_OWNED:
+                                    wrappedMethods.add(parseMethodsLine(line));
+                                    break;
+                                case GROUP_COMPATIBILITY:
+                                    wrappedGroups.add(parseCompatibilityGroup(line));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        catch (WreckedFileException ex){
+                            compatibilityInformation.addErrorEntity(generateWreckedWrongFileErrorEntity(path.toString(), Error.WrongFileFormat));
+                        }
+                    }
+                }
+                compatibilityInformation.setGroups(mergeCompatibilityParseInformation(wrappedGroups, wrappedMethods));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return compatibilityInformation;
+    }
     private WrappedRequestWithError readRequestFile(Path path) {
         List<DeserializedRequestEntity> deserializedRequestDataList = new ArrayList<>();
         List<String> lines = null;
@@ -229,11 +286,45 @@ public class DataParser {
         }
         return wrappedActiveObjectWithError;
     }
+    private void enrichActiveObjectWithCompatibility(List<WrappedCompatibilityInformation> wrappedCompatibilityInformationList, List<ActiveObject> activeObjects){
+        for (ActiveObject activeObject: activeObjects){
+            for (WrappedCompatibilityInformation compatibilityInformation: wrappedCompatibilityInformationList){
+                if (activeObject.getIdentifier().equals(compatibilityInformation.getActiveObjectId())){
+                    activeObject.setGroups(compatibilityInformation.getGroups());
+                    break;
+                }
+            }
+        }
+    }
+    private WrappedGroup parseCompatibilityGroup(String line) throws WreckedFileException{
+        String delims = "[ ]";
+        String[] properties = line.split(delims);
+        Group group = new Group(properties[0]);
+        WrappedGroup wrapper = new WrappedGroup(group);
+        for (int i = 1; i < properties.length; i++){
+            wrapper.addNewGroupName(properties[i]);
+        }
+        return wrapper;
+    }
 
+    private WrappedMethod parseMethodsLine(String line) throws WreckedFileException{
+        String delims = "[ ]";
+        String[] properties = line.split(delims);
+        if (properties.length != 2)
+            throw new WreckedFileException();
+        String groupName = properties[1];
+        int indexOfBraces = properties[0].indexOf('(');
+        if (indexOfBraces == -1)
+            throw new WreckedFileException();
+        return new WrappedMethod(properties[1], properties[0].substring(0, indexOfBraces));
+
+    }
     private DeserializedRequestEntity parseDeliverRequests(String line, TypeOfRequest typeOfRequest) throws WreckedFileException {
         DeserializedRequestEntity requestData = DeserializedRequestEntity.buildWithRequestType(typeOfRequest);
         String delims = "[ ]";
         String[] properties = line.split(delims);
+        if (properties.length < 6)
+            throw new WreckedFileException();
         requestData.setReceiverIdentifier(locateOrGenerateIdentifierFromKey(properties[1]));
         requestData.setThreadId(Integer.parseInt(properties[2]));
         requestData.setMethodName(properties[3]);
@@ -242,8 +333,27 @@ public class DataParser {
         requestData.setSenderIdentifier(locateOrGenerateIdentifierFromKey(properties[6]));
         return requestData;
     }
-
-    private String locateOrGenerateIdentifierFromKey(String key) {
+    private List<Group> mergeCompatibilityParseInformation(List<WrappedGroup> wrappedGroups, List<WrappedMethod> wrappedMethods){
+        List<Group> finalGroups = new ArrayList<>();
+        Map<String, Group> groups = new HashMap<>();
+        for (WrappedGroup group: wrappedGroups){
+            groups.put(group.getGroup().getName(), group.getGroup());
+        }
+        for (WrappedMethod method: wrappedMethods){
+            Group group = groups.get(method.getGroupName());
+//            if (group != null)
+            group.addMethodName(method.getMethodName());
+        }
+        for (WrappedGroup group: wrappedGroups){
+            for (String groupName: group.getCompatibleGroupNames()){
+                Group compatibleGroup = groups.get(groupName);
+                group.getGroup().addCompatibleGroup(compatibleGroup);
+            }
+            finalGroups.add(group.getGroup());
+        }
+        return finalGroups;
+    }
+    private synchronized String locateOrGenerateIdentifierFromKey(String key) {
         String newIdentifier;
         if (!oldAndNewAOIdsKeyValuePairs.containsKey(key)) {
             newIdentifier = AOIdentifierGenerator.generateUniqueAOIdentifier(key);
@@ -324,6 +434,81 @@ public class DataParser {
 
         public void setRequestData(List<DeserializedRequestEntity> requestData) {
             this.requestData = requestData;
+        }
+    }
+    private class WrappedCompatibilityInformation {
+        List<ErrorEntity> errorEntities = new CopyOnWriteArrayList<>();
+        private String activeObjectId;
+        private List<Group> groups = new ArrayList<>();
+        public String getActiveObjectId() {
+            return activeObjectId;
+        }
+
+        public void setActiveObjectId(String activeObjectId) {
+            this.activeObjectId = activeObjectId;
+        }
+
+        public void setGroups(List<Group> groups) {
+            this.groups = groups;
+        }
+
+        public void addGroup(Group group){
+            this.groups.add(group);
+        }
+        public List<Group> getGroups() {
+            return groups;
+        }
+        public List<ErrorEntity> getErrorEntities() {
+            return errorEntities;
+        }
+
+        public void setErrorEntities(List<ErrorEntity> errorEntities) {
+            this.errorEntities = errorEntities;
+        }
+
+        public void addErrorEntity(ErrorEntity errorEntity) {
+            errorEntities.add(errorEntity);
+        }
+    }
+    private class WrappedGroup {
+        private Group group;
+        private List<String> compatibleGroupNames = new ArrayList<>();
+
+        public WrappedGroup(Group group) {
+            this.group = group;
+        }
+        public void addNewGroupName(String name){
+            this.compatibleGroupNames.add(name);
+        }
+
+        public Group getGroup() {
+            return group;
+        }
+
+        public List<String> getCompatibleGroupNames() {
+            return compatibleGroupNames;
+        }
+    }
+    private enum CompatibilityStatusParsing{
+        GROUP_COMPATIBILITY,
+        METHOD_OWNED,
+        NONE
+    }
+    private class WrappedMethod{
+        private String groupName;
+        private String methodName;
+
+        public WrappedMethod(String groupName, String methodName) {
+            this.groupName = groupName;
+            this.methodName = methodName;
+        }
+
+        public String getGroupName() {
+            return groupName;
+        }
+
+        public String getMethodName() {
+            return methodName;
         }
     }
 }

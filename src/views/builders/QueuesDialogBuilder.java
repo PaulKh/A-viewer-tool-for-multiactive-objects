@@ -3,12 +3,16 @@ package views.builders;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
+import supportModel.WrappedQueueCompatibilityData;
 import utils.PreferencesHelper;
+import views.renderers.QueueCompatibilityButtonColumn;
 import views.renderers.QueueDialogRenderer;
 import views.table_models.DeliveryQueueTableModel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,15 +22,15 @@ import java.util.List;
  * Created by Paul on 30/04/15.
  */
 public class QueuesDialogBuilder {
-    private static List<Dialog> dialogs = new ArrayList<>();
+    private static List<WrappedQueueCompatibilityData> dialogs = new ArrayList<>();
 
-    public static Dialog buildQueueDialog(Frame owner, ActiveObject activeObject, long timePressed) {
+    public Dialog buildQueueDialog(Frame owner, ActiveObject activeObject, long timePressed) {
         int numberOfDialogs = PreferencesHelper.getNumberOfDialogs();
         if (numberOfDialogs == 0) {
             return null;
         }
 
-        JDialog dialog = new JDialog(owner);
+        WrappedQueueCompatibilityData dialog = new WrappedQueueCompatibilityData(owner);
         if (dialogs.size() >= numberOfDialogs) {
             dialogs.get(0).dispose();
             dialogs.remove(0);
@@ -40,6 +44,18 @@ public class QueuesDialogBuilder {
         JTable table = new JTable(new DeliveryQueueTableModel(threadEvents));
         table.getColumnModel().getColumn(0).setMaxWidth(50);
         table.setDefaultRenderer(Object.class, new QueueDialogRenderer(threadEvents, timePressed));
+//        table.getColumn("Compatibility").setCellRenderer(new ButtonRenderer());
+//        table.getColumn("Compatibility").setCellEditor(
+//                new ButtonEditor(new JCheckBox()));
+        Action showCompatibility = new AbstractAction()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+
+            }
+        };
+        QueueCompatibilityButtonColumn buttonColumn = new QueueCompatibilityButtonColumn(table, showCompatibility, 3, threadEvents);
+        buttonColumn.setMnemonic(KeyEvent.VK_D);
         JScrollPane scrollPane = new JScrollPane(table);
         dialog.add(scrollPane);
         dialog.pack();

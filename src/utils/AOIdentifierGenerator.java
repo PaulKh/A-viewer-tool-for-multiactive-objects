@@ -6,7 +6,7 @@ package utils;
 public class AOIdentifierGenerator {
     private static int activeObjectIdentifierCounter = 0;
 
-    public synchronized static String generateUniqueAOIdentifier(String identifier) {
+    public static String generateUniqueAOIdentifier(String identifier) {
         String delims = "[.]";
         String[] temp = identifier.split(delims);
         delims = "[_]";

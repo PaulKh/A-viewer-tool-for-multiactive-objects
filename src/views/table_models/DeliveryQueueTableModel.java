@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class DeliveryQueueTableModel extends AbstractTableModel {
     private List<ThreadEvent> threadEvents;
-    private String[] headers = {"#", "Event identifier", "Delivered time"};
+    private String[] headers = {"#", "Event identifier", "Delivered time", "Compatibility"};
 
     public DeliveryQueueTableModel(List<ThreadEvent> threadEvents) {
         this.threadEvents = threadEvents;
@@ -47,6 +47,8 @@ public class DeliveryQueueTableModel extends AbstractTableModel {
 
                 return dateFormat.format(startDate);
             }
+            case 3:
+                return "Show NOT compatible";
         }
         return null;
     }

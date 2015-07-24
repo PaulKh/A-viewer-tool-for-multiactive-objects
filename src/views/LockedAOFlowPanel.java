@@ -1,5 +1,6 @@
 package views;
 
+import enums.MenuItemType;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;
@@ -36,11 +37,11 @@ public class LockedAOFlowPanel extends FlowPanel implements MouseMotionListener 
                 super.mouseClicked(e);
                 RectangleWithThreadEvent rect = getRectangleContainingPoint(e, 0);
                 if (rect != null && callback != null) {
-                    callback.threadEventClicked(rect.getThreadEvent());
+                    callback.threadEventClicked(MenuItemType.DEPENDENCIES, rect.getThreadEvent());
                 } else {
                     rect = getRectangleContainingPoint(e, 5);
                     if (rect != null && callback != null) {
-                        callback.threadEventClicked(rect.getThreadEvent());
+                        callback.threadEventClicked(MenuItemType.DEPENDENCIES, rect.getThreadEvent());
                     }
                 }
                 long time = SizeHelper.instance().convertLengthToTime(e.getX());
