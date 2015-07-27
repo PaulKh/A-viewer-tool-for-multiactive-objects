@@ -1,11 +1,10 @@
 package views.renderers;
 
-import model.ThreadEvent;
+import callbacks.CompatibilityDialogCallback;
+import supportModel.WrappedQueueCompatibilityData;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -27,7 +26,6 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener
 {
 	private JTable table;
-	private Action action;
 	private int mnemonic;
 	private Border originalBorder;
 	private Border focusBorder;
@@ -36,8 +34,9 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	private JButton editButton;
 	private Object editorValue;
 	private boolean isButtonColumnEditor;
+    private CompatibilityDialogCallback callback;
 
-    private List<ThreadEvent> threadEvents;
+    private WrappedQueueCompatibilityData compatibilityData;
 
 	/**
 	 *  Create the ButtonColumn to be used as a renderer and editor. The
@@ -48,15 +47,16 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	 *  @param action the Action to be invoked when the button is invoked
 	 *  @param column the column to which the button renderer/editor is added
 	 */
-	public QueueCompatibilityButtonColumn(JTable table, Action action, int column, List<ThreadEvent> threadEvents)
+	public QueueCompatibilityButtonColumn(JTable table, int column, WrappedQueueCompatibilityData compatibilityData, CompatibilityDialogCallback callback)
 	{
+        this.callback = callback;
 		this.table = table;
-		this.action = action;
-        this.threadEvents = threadEvents;
+        this.compatibilityData = compatibilityData;
 		renderButton = new JButton();
 		editButton = new JButton();
 		editButton.setFocusPainted( false );
 		editButton.addActionListener( this );
+//        renderButton.addActionListener(this);
 		originalBorder = editButton.getBorder();
 		setFocusBorder( new LineBorder(Color.BLUE) );
 
@@ -109,6 +109,12 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	public Component getTableCellEditorComponent(
 		JTable table, Object value, boolean isSelected, int row, int column)
 	{
+        if (!isButton(row)) {
+            JTextField editor = new JTextField();
+            editor.setBorder(null);
+            editor.setText(value.toString());
+            return editor;
+        }
 		if (value == null)
 		{
 			editButton.setText( "" );
@@ -141,7 +147,7 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	public Component getTableCellRendererComponent(
 		JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
 	{
-        if (row == 0) {
+        if (!isButton(row)) {
             JTextField editor = new JTextField();
             editor.setBorder(null);
             editor.setText(value.toString());
@@ -186,7 +192,9 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 
 		return renderButton;
 	}
-
+    private boolean isButton(int row){
+        return !(compatibilityData.getCompatibilityIdentifierSelected() != -1 && row != compatibilityData.getCompatibilityIdentifierSelected());
+    }
 //
 //  Implement ActionListener interface
 //
@@ -197,14 +205,23 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
 	{
 		int row = table.convertRowIndexToModel( table.getEditingRow() );
 		fireEditingStopped();
-
+        if(compatibilityData.getCompatibilityIdentifierSelected() == -1){
+            compatibilityData.setCompatibilityIdentifierSelected(row);
+        }
+        else if (row == compatibilityData.getCompatibilityIdentifierSelected()){
+            compatibilityData.setCompatibilityIdentifierSelected(-1);
+        }
+        else {
+            return;
+        }
+        if (callback != null)
+            callback.dataUpdated(compatibilityData);
 		//  Invoke the Action
 
-		ActionEvent event = new ActionEvent(
-			table,
-			ActionEvent.ACTION_PERFORMED,
-			"" + row);
-		action.actionPerformed(event);
+//		ActionEvent event = new ActionEvent(
+//			table,
+//			ActionEvent.ACTION_PERFORMED,
+//			"" + row);
 	}
 
 //

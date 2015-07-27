@@ -1,5 +1,7 @@
 package supportModel;
 
+import model.ThreadEvent;
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -9,13 +11,12 @@ import java.util.List;
 /**
  * Created by pkhvoros on 7/24/15.
  */
-public class WrappedQueueCompatibilityData extends JDialog {
-    private List<Integer> compatibilityIdentifiersSelected = new ArrayList<>();
+public class WrappedQueueCompatibilityData{
+    private List<ThreadEvent> threadEvents;
     private int compatibilityIdentifierSelected = -1;
 
-
-    public WrappedQueueCompatibilityData(Frame owner) {
-        super(owner);
+    public WrappedQueueCompatibilityData(List<ThreadEvent> threadEvents) {
+        this.threadEvents = threadEvents;
     }
 
     public void setCompatibilityIdentifierSelected(int compatibilityIdentifierSelected) {
@@ -24,5 +25,9 @@ public class WrappedQueueCompatibilityData extends JDialog {
 
     public int getCompatibilityIdentifierSelected() {
         return compatibilityIdentifierSelected;
+    }
+
+    public List<ThreadEvent> getThreadEvents() {
+        return threadEvents;
     }
 }

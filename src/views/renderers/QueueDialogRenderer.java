@@ -1,6 +1,7 @@
 package views.renderers;
 
 import model.ThreadEvent;
+import supportModel.WrappedQueueCompatibilityData;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -11,11 +12,11 @@ import java.util.List;
  * Created by Paul on 04/05/15.
  */
 public class QueueDialogRenderer implements TableCellRenderer {
-    private List<ThreadEvent> threadEvents;
+    private WrappedQueueCompatibilityData compatibilityData;
     private long timeSelected;
 
-    public QueueDialogRenderer(java.util.List<ThreadEvent> threadEvents, long timeSelected) {
-        this.threadEvents = threadEvents;
+    public QueueDialogRenderer(WrappedQueueCompatibilityData compatibilityData, long timeSelected) {
+        this.compatibilityData = compatibilityData;
         this.timeSelected = timeSelected;
     }
 
@@ -25,11 +26,11 @@ public class QueueDialogRenderer implements TableCellRenderer {
         editor.setBorder(null);
         if (value != null)
             editor.setText(value.toString());
-        if (threadEvents.get(row).getFinishTime() < timeSelected) {
+        if (compatibilityData.getThreadEvents().get(row).getFinishTime() < timeSelected) {
             editor.setBackground(Color.RED);
-        } else if (threadEvents.get(row).getStartTime() < timeSelected) {
+        } else if (compatibilityData.getThreadEvents().get(row).getStartTime() < timeSelected) {
             editor.setBackground(Color.GREEN);
-        } else if (threadEvents.get(row).getDerivedTime() < timeSelected) {
+        } else if (compatibilityData.getThreadEvents().get(row).getDerivedTime() < timeSelected) {
             editor.setBackground(Color.cyan);
         }
         return editor;

@@ -1,6 +1,7 @@
 package views.table_models;
 
 import model.ThreadEvent;
+import supportModel.WrappedQueueCompatibilityData;
 
 import javax.swing.table.AbstractTableModel;
 import java.text.DateFormat;
@@ -12,16 +13,24 @@ import java.util.List;
  * Created by Paul on 04/05/15.
  */
 public class DeliveryQueueTableModel extends AbstractTableModel {
-    private List<ThreadEvent> threadEvents;
+    private WrappedQueueCompatibilityData compatibilityData;
     private String[] headers = {"#", "Event identifier", "Delivered time", "Compatibility"};
 
-    public DeliveryQueueTableModel(List<ThreadEvent> threadEvents) {
-        this.threadEvents = threadEvents;
+    public DeliveryQueueTableModel(WrappedQueueCompatibilityData compatibilityData) {
+        this.compatibilityData = compatibilityData;
     }
 
+    public void updateData(WrappedQueueCompatibilityData compatibilityData){
+        this.compatibilityData = compatibilityData;
+        fireTableDataChanged();
+    }
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return true;
+    }
     @Override
     public int getRowCount() {
-        return threadEvents.size();
+        return compatibilityData.getThreadEvents().size();
     }
 
     @Override
@@ -36,19 +45,32 @@ public class DeliveryQueueTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
+        ThreadEvent threadEvent = compatibilityData.getThreadEvents().get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return rowIndex + 1;
             case 1:
-                return threadEvents.get(rowIndex).getUniqueMethodName();
+                return threadEvent.getUniqueMethodName();
             case 2: {
                 DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.S");
-                Date startDate = new Date(threadEvents.get(rowIndex).getDerivedTime());
+                Date startDate = new Date(threadEvent.getDerivedTime());
 
                 return dateFormat.format(startDate);
             }
-            case 3:
-                return "Show NOT compatible";
+            case 3: {
+                if (compatibilityData.getCompatibilityIdentifierSelected() == -1)
+                    return "Show compatibility information";
+                else if(compatibilityData.getCompatibilityIdentifierSelected() == rowIndex){
+                    return "Hide compatibility information";
+                }
+                else{
+                    ThreadEvent selectedThreadEvent = compatibilityData.getThreadEvents().get(compatibilityData.getCompatibilityIdentifierSelected());
+                    if(selectedThreadEvent.getThread().getActiveObject().areEventsCompatible(selectedThreadEvent, threadEvent))
+                        return "compatible";
+                    else
+                        return "NOT compatible";
+                }
+            }
         }
         return null;
     }
