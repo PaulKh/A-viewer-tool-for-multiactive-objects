@@ -1,11 +1,5 @@
 package utils;
 
-import model.ActiveObject;
-import model.ActiveObjectThread;
-import model.ThreadEvent;
-
-import java.util.List;
-
 /**
  * Created by pkhvoros on 3/19/15.
  */
@@ -72,7 +66,7 @@ public class SizeHelper {
         return activeObjectTitleWidth + threadTitleWidth;
     }
 
-    public boolean didEventHappendBetweenMinAndMax(long time){
+    public boolean didEventHappendBetweenMinAndMax(long time) {
         return time >= minimumTime && time <= maximumTime;
     }
 

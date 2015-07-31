@@ -1,7 +1,5 @@
 package supportModel;
 
-import model.ThreadEvent;
-
 /**
  * Created by pkhvoros on 4/8/15.
  */

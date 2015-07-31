@@ -4,7 +4,6 @@ import model.ActiveObject;
 import model.ThreadEvent;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,25 +12,27 @@ import java.util.Map;
 public class CompatibilityHelper {
     private static CompatibilityHelper compatibilityHelper;
     private Map<ActiveObject, ThreadEvent> compatibilityEvents = new HashMap<>();
-    public synchronized static CompatibilityHelper instance(){
-        if (compatibilityHelper == null){
+
+    public synchronized static CompatibilityHelper instance() {
+        if (compatibilityHelper == null) {
             compatibilityHelper = new CompatibilityHelper();
         }
         return compatibilityHelper;
     }
 
 
-
-//    public Map<ActiveObject, ThreadEvent> getCompatibilityEvents() {
+    //    public Map<ActiveObject, ThreadEvent> getCompatibilityEvents() {
 //        return compatibilityEvents;
 //    }
-    public void addTuple(ActiveObject activeObject, ThreadEvent threadEvent){
+    public void addTuple(ActiveObject activeObject, ThreadEvent threadEvent) {
         compatibilityEvents.put(activeObject, threadEvent);
     }
-    public ThreadEvent getEventForKey(ActiveObject activeObject){
+
+    public ThreadEvent getEventForKey(ActiveObject activeObject) {
         return compatibilityEvents.get(activeObject);
     }
-    public void removeTuple(ActiveObject key){
+
+    public void removeTuple(ActiveObject key) {
         compatibilityEvents.remove(key);
     }
 }

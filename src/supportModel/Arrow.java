@@ -17,7 +17,10 @@ public abstract class Arrow {
     public ThreadEvent getSourceThreadEvent() {
         return sourceThreadEvent;
     }
+
     public abstract long getSentTime();
+
     public abstract long getDeliveredTime();
+
     public abstract ActiveObject getDestinationActiveObject();
 }

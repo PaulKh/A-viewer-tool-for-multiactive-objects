@@ -6,7 +6,7 @@ import model.ThreadEvent;
 /**
  * Created by pkhvoros on 6/18/15.
  */
-public class NotCompleteArrow extends Arrow{
+public class NotCompleteArrow extends Arrow {
     private long sentTime;
     private long derivedTime;
     private ActiveObject receiverActiveObject;

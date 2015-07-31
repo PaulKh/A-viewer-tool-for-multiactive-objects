@@ -1,12 +1,10 @@
 package views.renderers;
 
-import model.ThreadEvent;
 import supportModel.WrappedQueueCompatibilityData;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.List;
 
 /**
  * Created by Paul on 04/05/15.

@@ -27,11 +27,11 @@ public class Group {
         return methodNames;
     }
 
-    public void addCompatibleGroup(Group group){
+    public void addCompatibleGroup(Group group) {
         this.compatibleGroups.add(group);
     }
 
-    public void addMethodName(String name){
+    public void addMethodName(String name) {
         this.methodNames.add(name);
     }
 }

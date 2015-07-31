@@ -10,6 +10,7 @@ public class ActiveObject {
     private String identifier;
     private List<ActiveObjectThread> threads = new ArrayList<ActiveObjectThread>();
     private List<Group> groups = new ArrayList<>();
+
     public ActiveObject(String identifier) {
         this.identifier = identifier;
     }
@@ -44,12 +45,12 @@ public class ActiveObject {
         return threads;
     }
 
-    public void setGroups(List<Group> groups) {
-        this.groups = groups;
-    }
-
     public List<Group> getGroups() {
         return groups;
+    }
+
+    public void setGroups(List<Group> groups) {
+        this.groups = groups;
     }
 
     @Override
@@ -59,19 +60,20 @@ public class ActiveObject {
         }
         return false;
     }
-    public boolean areEventsCompatible(ThreadEvent threadEvent1, ThreadEvent threadEvent2){
+
+    public boolean areEventsCompatible(ThreadEvent threadEvent1, ThreadEvent threadEvent2) {
         Group groupOfFirstEvent = null;
-        for (Group tempGroup:groups){
-            if (tempGroup.getMethodNames().contains(threadEvent1.getMethodName())){
+        for (Group tempGroup : groups) {
+            if (tempGroup.getMethodNames().contains(threadEvent1.getMethodName())) {
                 groupOfFirstEvent = tempGroup;
                 break;
             }
         }
         if (groupOfFirstEvent == null)
             return false;
-        for (Group tempGroup:groups){
-            if (tempGroup.getMethodNames().contains(threadEvent2.getMethodName())){
-                if (tempGroup.getCompatibleGroups().contains(groupOfFirstEvent)){
+        for (Group tempGroup : groups) {
+            if (tempGroup.getMethodNames().contains(threadEvent2.getMethodName())) {
+                if (tempGroup.getCompatibleGroups().contains(groupOfFirstEvent)) {
                     return true;
                 }
                 break;

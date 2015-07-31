@@ -24,6 +24,25 @@ import java.util.List;
 public class QueuesDialogBuilder implements CompatibilityDialogCallback {
     private DeliveryQueueTableModel model;
 
+    private static List<ThreadEvent> getDeliveredList(ActiveObject activeObject, long timePressed) {
+        List<ThreadEvent> allThreadEventsToSort = new ArrayList<>();
+        for (ActiveObjectThread thread : activeObject.getThreads()) {
+            allThreadEventsToSort.addAll(thread.getEvents());
+//            for (ThreadEvent threadEvent:thread.getEvents()){
+//                if (threadEvent.getDerivedTime() > timePressed){
+//                    allThreadEventsToSort.add(threadEvent);
+//                }
+//            }
+        }
+        Collections.sort(allThreadEventsToSort, new Comparator<ThreadEvent>() {
+            @Override
+            public int compare(ThreadEvent o1, ThreadEvent o2) {
+                return o1.getDerivedTime() > o2.getDerivedTime() ? 1 : -1;
+            }
+        });
+        return allThreadEventsToSort;
+    }
+
     public Dialog buildQueueDialog(Frame owner, ActiveObject activeObject, long timePressed) {
         int numberOfDialogs = PreferencesHelper.getNumberOfDialogs();
         if (numberOfDialogs == 0) {
@@ -47,25 +66,6 @@ public class QueuesDialogBuilder implements CompatibilityDialogCallback {
         dialog.pack();
         dialog.setVisible(true);
         return dialog;
-    }
-
-    private static List<ThreadEvent> getDeliveredList(ActiveObject activeObject, long timePressed) {
-        List<ThreadEvent> allThreadEventsToSort = new ArrayList<>();
-        for (ActiveObjectThread thread : activeObject.getThreads()) {
-            allThreadEventsToSort.addAll(thread.getEvents());
-//            for (ThreadEvent threadEvent:thread.getEvents()){
-//                if (threadEvent.getDerivedTime() > timePressed){
-//                    allThreadEventsToSort.add(threadEvent);
-//                }
-//            }
-        }
-        Collections.sort(allThreadEventsToSort, new Comparator<ThreadEvent>() {
-            @Override
-            public int compare(ThreadEvent o1, ThreadEvent o2) {
-                return o1.getDerivedTime() > o2.getDerivedTime() ? 1 : -1;
-            }
-        });
-        return allThreadEventsToSort;
     }
 
     @Override

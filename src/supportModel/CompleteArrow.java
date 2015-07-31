@@ -6,7 +6,7 @@ import model.ThreadEvent;
 /**
  * Created by pkhvoros on 6/18/15.
  */
-public class CompleteArrow extends Arrow{
+public class CompleteArrow extends Arrow {
     private ThreadEvent destinationThreadEvent;
 
     public CompleteArrow(ThreadEvent sourceThreadEvent, ThreadEvent destinationThreadEvent) {

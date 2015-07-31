@@ -1,7 +1,6 @@
 package views;
 
 import callbacks.ThreadEventClickedCallback;
-import enums.HighlithedStatus;
 import model.ActiveObject;
 import model.ActiveObjectThread;
 import model.ThreadEvent;

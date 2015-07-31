@@ -1,9 +1,7 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by pkhvoros on 3/13/15.
@@ -58,9 +56,9 @@ public class ActiveObjectThread {
         return activeObject;
     }
 
-    public ThreadEvent findThreadEventByTime(long time){
-        for(ThreadEvent threadEvent:events){
-            if ((time >= threadEvent.getStartTime() && time <= threadEvent.getFinishTime()) || !threadEvent.isEventLastsAnyTime()){
+    public ThreadEvent findThreadEventByTime(long time) {
+        for (ThreadEvent threadEvent : events) {
+            if ((time >= threadEvent.getStartTime() && time <= threadEvent.getFinishTime()) || !threadEvent.isEventLastsAnyTime()) {
                 return threadEvent;
             }
         }

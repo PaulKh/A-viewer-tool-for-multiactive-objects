@@ -39,7 +39,7 @@ public class DataHelper {
         enrichThreadEvent(parsedData);
     }
 
-//The method updates the values of when request has been delivered, sent and who was the sender
+    //The method updates the values of when request has been delivered, sent and who was the sender
 //In other words it is the merging of two different types of logs. One about the activeobject and the other is about request delivery info.
     private void enrichThreadEvent(ParsedData parsedData) {
         for (ActiveObject activeObject : activeObjects) {
@@ -64,22 +64,24 @@ public class DataHelper {
         addNotCompletedArrows(parsedData);
         setMaxForNotCompletedEvents(parsedData);
     }
-    private void addNotCompletedArrows(ParsedData parsedData){
-        for (Map.Entry<String, DeserializedRequestSent> requestSentTuple: parsedData.getDeserializedRequestData().getDeserializedSendRequestData().entrySet()){
+
+    private void addNotCompletedArrows(ParsedData parsedData) {
+        for (Map.Entry<String, DeserializedRequestSent> requestSentTuple : parsedData.getDeserializedRequestData().getDeserializedSendRequestData().entrySet()) {
             String key = requestSentTuple.getKey();
             DeserializedRequestsDelivered deliveredRequest = parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().get(key);
             if (deliveredRequest == null)
                 continue;
             DeserializedRequestSent requestSent = requestSentTuple.getValue();
             ActiveObject senderActiveObject = findActiveObjectWithId(requestSent.getSenderIdentifier());
-            if(senderActiveObject != null){
+            if (senderActiveObject != null) {
                 ActiveObjectThread senderThread = findThreadById(senderActiveObject, requestSent.getThreadId());
                 ThreadEvent callerEvent = senderThread.findThreadEventByTime(requestSent.getTimeStamp());
                 callerEvent.addArrow(new NotCompleteArrow(callerEvent, requestSent.getTimeStamp(), deliveredRequest.getTimeStamp(), findActiveObjectWithId(deliveredRequest.getReceiverIdentifier())));
             }
         }
     }
-    private void addArrows(DeserializedRequestSent sent, ThreadEvent threadEvent){
+
+    private void addArrows(DeserializedRequestSent sent, ThreadEvent threadEvent) {
         ActiveObject senderActiveObject = findActiveObjectWithId(sent.getSenderIdentifier());
         if (senderActiveObject == null)
             return;
@@ -107,17 +109,19 @@ public class DataHelper {
         }
         return threadEvents;
     }
-    private void setMaxForNotCompletedEvents(ParsedData parsedData){
-        for (DeserializedRequestSent sent:parsedData.getDeserializedRequestData().getDeserializedSendRequestData().values()){
+
+    private void setMaxForNotCompletedEvents(ParsedData parsedData) {
+        for (DeserializedRequestSent sent : parsedData.getDeserializedRequestData().getDeserializedSendRequestData().values()) {
             if (sent.getTimeStamp() > maximumTime)
                 maximumTime = sent.getTimeStamp();
         }
-        for (DeserializedRequestsDelivered delivered:parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().values()){
+        for (DeserializedRequestsDelivered delivered : parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().values()) {
             if (delivered.getTimeStamp() > maximumTime)
                 maximumTime = delivered.getTimeStamp();
         }
     }
-    private void setMaxMinForThreadEvent(ThreadEvent threadEvent){
+
+    private void setMaxMinForThreadEvent(ThreadEvent threadEvent) {
         if (threadEvent.getStartTime() < minimumTime) {
             minimumTime = threadEvent.getStartTime();
         }
@@ -128,6 +132,7 @@ public class DataHelper {
             maximumTime = threadEvent.getStartTime() + 50;
         }
     }
+
     private void setRequestSent(ThreadEvent threadEvent, DeserializedRequestEntity requestData) {
         threadEvent.setRequestSentTime(requestData.getTimeStamp());
         threadEvent.setSenderThreadId(requestData.getThreadId());
@@ -145,18 +150,18 @@ public class DataHelper {
         return activeObjects;
     }
 
-    private ActiveObject findActiveObjectWithId(String activeObjectId){
-        for (ActiveObject innerActiveObject: activeObjects){
-            if (innerActiveObject.getIdentifier().equals(activeObjectId)){
+    private ActiveObject findActiveObjectWithId(String activeObjectId) {
+        for (ActiveObject innerActiveObject : activeObjects) {
+            if (innerActiveObject.getIdentifier().equals(activeObjectId)) {
                 return innerActiveObject;
             }
         }
         return null;
     }
 
-    private ActiveObjectThread findThreadById(ActiveObject activeObject, int threadId){
-        for (ActiveObjectThread innerThread:activeObject.getThreads()){
-            if (innerThread.getThreadId() == threadId){
+    private ActiveObjectThread findThreadById(ActiveObject activeObject, int threadId) {
+        for (ActiveObjectThread innerThread : activeObject.getThreads()) {
+            if (innerThread.getThreadId() == threadId) {
                 return innerThread;
             }
         }
@@ -171,7 +176,7 @@ public class DataHelper {
         return minimumTime;
     }
 
-    public StatisticsInformation collectStatistics(){
+    public StatisticsInformation collectStatistics() {
         StatisticsInformation statisticsInformation = new StatisticsInformation();
         long maximumWatingInQueueTime = Long.MIN_VALUE;
         long maximumRequestExecutionTime = Long.MIN_VALUE;
@@ -187,26 +192,26 @@ public class DataHelper {
         for (ActiveObject activeObject : activeObjects) {
             for (ActiveObjectThread thread : activeObject.getThreads()) {
                 counterRequests += thread.getEvents().size();
-                for (ThreadEvent event:thread.getEvents()){
+                for (ThreadEvent event : thread.getEvents()) {
                     long executionTime = event.getFinishTime() - event.getStartTime();
                     long waitingInQueueTime = event.getStartTime() - event.getDerivedTime();
                     arrows.addAll(event.getArrows());
                     if (event.getDerivedTime() != 0) {
                         totalQueueTime += waitingInQueueTime;
                     }
-                    if (executionTime > maximumRequestExecutionTime){
+                    if (executionTime > maximumRequestExecutionTime) {
                         maximumRequestExecutionTime = executionTime;
                         maximumExecutionRequest = event;
                     }
-                    if (executionTime < minimumRequestExecutionTime){
+                    if (executionTime < minimumRequestExecutionTime) {
                         minimumRequestExecutionTime = executionTime;
                         minimumExecutionRequest = event;
                     }
-                    if (waitingInQueueTime > maximumWatingInQueueTime){
+                    if (waitingInQueueTime > maximumWatingInQueueTime) {
                         maximumWatingInQueueTime = waitingInQueueTime;
                         maximumWaitingInQueueRequest = event;
                     }
-                    if (waitingInQueueTime < minimumWatingInQueueTime){
+                    if (waitingInQueueTime < minimumWatingInQueueTime) {
                         minimumWatingInQueueTime = waitingInQueueTime;
                         minimumWaitingInQueueRequest = event;
                     }
@@ -219,7 +224,7 @@ public class DataHelper {
         statisticsInformation.setLongestExecutedRequest(maximumExecutionRequest);
         statisticsInformation.setShortestExecutedRequest(minimumExecutionRequest);
 
-        statisticsInformation.setAverageQueueTime(totalQueueTime/counterRequests);
+        statisticsInformation.setAverageQueueTime(totalQueueTime / counterRequests);
         statisticsInformation.setNumberOfActiveObjects(activeObjects.size());
         statisticsInformation.setTotalNumberOfRequests(counterRequests);
         statisticsInformation.setTotalNumberOfArrows(arrows.size());

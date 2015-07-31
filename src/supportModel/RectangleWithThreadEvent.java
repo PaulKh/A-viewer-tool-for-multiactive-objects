@@ -35,36 +35,31 @@ public class RectangleWithThreadEvent {
 
     public void setDependencyHighlightedStatus(boolean highlighted) {
         if (highlighted) {
-            if (highlithedStatus == HighlithedStatus.COMPATIBILY_HIGHLITED){
+            if (highlithedStatus == HighlithedStatus.COMPATIBILY_HIGHLITED) {
                 highlithedStatus = HighlithedStatus.BOTH_HIGHLIGHTED;
-            }
-            else if (highlithedStatus == HighlithedStatus.NONE){
+            } else if (highlithedStatus == HighlithedStatus.NONE) {
                 highlithedStatus = HighlithedStatus.DEPENDENCY_HIGHLIGHTED;
             }
-        }
-        else {
-            if (highlithedStatus == HighlithedStatus.BOTH_HIGHLIGHTED){
+        } else {
+            if (highlithedStatus == HighlithedStatus.BOTH_HIGHLIGHTED) {
                 highlithedStatus = HighlithedStatus.COMPATIBILY_HIGHLITED;
-            }
-            else if (highlithedStatus == HighlithedStatus.DEPENDENCY_HIGHLIGHTED){
+            } else if (highlithedStatus == HighlithedStatus.DEPENDENCY_HIGHLIGHTED) {
                 highlithedStatus = HighlithedStatus.NONE;
             }
         }
     }
+
     public void setCompatibilityHighlightedStatus(boolean highlighted) {
         if (highlighted) {
-            if (highlithedStatus == HighlithedStatus.DEPENDENCY_HIGHLIGHTED){
+            if (highlithedStatus == HighlithedStatus.DEPENDENCY_HIGHLIGHTED) {
                 highlithedStatus = HighlithedStatus.BOTH_HIGHLIGHTED;
-            }
-            else if (highlithedStatus == HighlithedStatus.NONE){
+            } else if (highlithedStatus == HighlithedStatus.NONE) {
                 highlithedStatus = HighlithedStatus.COMPATIBILY_HIGHLITED;
             }
-        }
-        else {
-            if (highlithedStatus == HighlithedStatus.BOTH_HIGHLIGHTED){
+        } else {
+            if (highlithedStatus == HighlithedStatus.BOTH_HIGHLIGHTED) {
                 highlithedStatus = HighlithedStatus.DEPENDENCY_HIGHLIGHTED;
-            }
-            else if (highlithedStatus == HighlithedStatus.COMPATIBILY_HIGHLITED){
+            } else if (highlithedStatus == HighlithedStatus.COMPATIBILY_HIGHLITED) {
                 highlithedStatus = HighlithedStatus.NONE;
             }
         }

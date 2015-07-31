@@ -9,6 +9,8 @@ import model.ThreadEvent;
  */
 public interface ThreadEventClickedCallback {
     public void threadEventClicked(MenuItemType menuItemType, ThreadEvent threadEvent);
+
     public void threadClicked(ActiveObject activeObject, long timeClicked);
+
     public void removeCompatibilityClicked(ActiveObject activeObject);
 }

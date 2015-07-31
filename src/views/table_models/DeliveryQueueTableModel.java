@@ -7,7 +7,6 @@ import javax.swing.table.AbstractTableModel;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Paul on 04/05/15.
@@ -20,14 +19,16 @@ public class DeliveryQueueTableModel extends AbstractTableModel {
         this.compatibilityData = compatibilityData;
     }
 
-    public void updateData(WrappedQueueCompatibilityData compatibilityData){
+    public void updateData(WrappedQueueCompatibilityData compatibilityData) {
         this.compatibilityData = compatibilityData;
         fireTableDataChanged();
     }
+
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
+
     @Override
     public int getRowCount() {
         return compatibilityData.getThreadEvents().size();
@@ -60,12 +61,11 @@ public class DeliveryQueueTableModel extends AbstractTableModel {
             case 3: {
                 if (compatibilityData.getCompatibilityIdentifierSelected() == -1)
                     return "Show compatibility information";
-                else if(compatibilityData.getCompatibilityIdentifierSelected() == rowIndex){
+                else if (compatibilityData.getCompatibilityIdentifierSelected() == rowIndex) {
                     return "Hide compatibility information";
-                }
-                else{
+                } else {
                     ThreadEvent selectedThreadEvent = compatibilityData.getThreadEvents().get(compatibilityData.getCompatibilityIdentifierSelected());
-                    if(selectedThreadEvent.getThread().getActiveObject().areEventsCompatible(selectedThreadEvent, threadEvent))
+                    if (selectedThreadEvent.getThread().getActiveObject().areEventsCompatible(selectedThreadEvent, threadEvent))
                         return "compatible";
                     else
                         return "NOT compatible";

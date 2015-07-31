@@ -1,7 +1,6 @@
 package model;
 
 import supportModel.Arrow;
-import supportModel.ArrowWithPosition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,8 @@ public class ThreadEvent {
         this.thread = thread;
         localUniqueId = updateCounter();
     }
-    private synchronized int updateCounter(){
+
+    private synchronized int updateCounter() {
         return counter++;
     }
 
@@ -114,7 +114,7 @@ public class ThreadEvent {
         this.arrows.add(arrow);
     }
 
-    public boolean isEventLastsAnyTime(){
+    public boolean isEventLastsAnyTime() {
         return finishTime - startTime >= 0;
     }
 }
