@@ -8,9 +8,7 @@ import supportModel.deserializedData.DeserializedRequestEntity;
 import supportModel.deserializedData.DeserializedRequestSent;
 import supportModel.deserializedData.DeserializedRequestsDelivered;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by pkhvoros on 4/2/15.
@@ -28,22 +26,16 @@ public class DataHelper {
         ParsedData parsedData = dataParser.parseData(directory);
         errorEntities = parsedData.getErrorEntities();
         long timeForParsing = System.currentTimeMillis() - time;
+        this.activeObjects = parsedData.getActiveObjects();
         saturateActiveObjectsWithRequests(parsedData);
-        int counter = 0;
-        for (ActiveObject activeObject : activeObjects) {
-            for (ActiveObjectThread thread : activeObject.getThreads())
-                counter += thread.getEvents().size();
-        }
+        collectStatistics();
         System.out.println("time for parsing = " + timeForParsing + "\ntime for merging = "
                 + (System.currentTimeMillis() - timeForParsing - time) + "\ntotal time = " + (System.currentTimeMillis() - time)
                 + "\nnumber of delivery " + parsedData.getDeserializedRequestData().getDeserializedDeliveryRequestData().size()
-                + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size()
-                + "\nevents count = " + counter + "\n");
+                + "\nnumber of sendings = " + parsedData.getDeserializedRequestData().getDeserializedSendRequestData().size());
     }
 
     private void saturateActiveObjectsWithRequests(ParsedData parsedData) {
-//        int counter = 0, counter1 = 0;
-        this.activeObjects = parsedData.getActiveObjects();
         enrichThreadEvent(parsedData);
     }
 
@@ -177,5 +169,60 @@ public class DataHelper {
 
     public long getMinimumTime() {
         return minimumTime;
+    }
+
+    public StatisticsInformation collectStatistics(){
+        StatisticsInformation statisticsInformation = new StatisticsInformation();
+        long maximumWatingInQueueTime = Long.MIN_VALUE;
+        long maximumRequestExecutionTime = Long.MIN_VALUE;
+        long minimumWatingInQueueTime = Long.MAX_VALUE;
+        long minimumRequestExecutionTime = Long.MAX_VALUE;
+        ThreadEvent maximumWaitingInQueueRequest = null;
+        ThreadEvent minimumWaitingInQueueRequest = null;
+        ThreadEvent maximumExecutionRequest = null;
+        ThreadEvent minimumExecutionRequest = null;
+        int counterRequests = 0;
+        long totalQueueTime = 0;
+        Set<Arrow> arrows = new HashSet<>();
+        for (ActiveObject activeObject : activeObjects) {
+            for (ActiveObjectThread thread : activeObject.getThreads()) {
+                counterRequests += thread.getEvents().size();
+                for (ThreadEvent event:thread.getEvents()){
+                    long executionTime = event.getFinishTime() - event.getStartTime();
+                    long waitingInQueueTime = event.getStartTime() - event.getDerivedTime();
+                    arrows.addAll(event.getArrows());
+                    if (event.getDerivedTime() != 0) {
+                        totalQueueTime += waitingInQueueTime;
+                    }
+                    if (executionTime > maximumRequestExecutionTime){
+                        maximumRequestExecutionTime = executionTime;
+                        maximumExecutionRequest = event;
+                    }
+                    if (executionTime < minimumRequestExecutionTime){
+                        minimumRequestExecutionTime = executionTime;
+                        minimumExecutionRequest = event;
+                    }
+                    if (waitingInQueueTime > maximumWatingInQueueTime){
+                        maximumWatingInQueueTime = waitingInQueueTime;
+                        maximumWaitingInQueueRequest = event;
+                    }
+                    if (waitingInQueueTime < minimumWatingInQueueTime){
+                        minimumWatingInQueueTime = waitingInQueueTime;
+                        minimumWaitingInQueueRequest = event;
+                    }
+                }
+            }
+        }
+
+        statisticsInformation.setLeastWaitedRequest(minimumWaitingInQueueRequest);
+        statisticsInformation.setMostWaitedRequest(maximumWaitingInQueueRequest);
+        statisticsInformation.setLongestExecutedRequest(maximumExecutionRequest);
+        statisticsInformation.setShortestExecutedRequest(minimumExecutionRequest);
+
+        statisticsInformation.setAverageQueueTime(totalQueueTime/counterRequests);
+        statisticsInformation.setNumberOfActiveObjects(activeObjects.size());
+        statisticsInformation.setTotalNumberOfRequests(counterRequests);
+        statisticsInformation.setTotalNumberOfArrows(arrows.size());
+        return statisticsInformation;
     }
 }

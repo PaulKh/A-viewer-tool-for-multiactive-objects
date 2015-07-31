@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -193,16 +194,26 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         menuBar.add(helpMenu);
 
         JMenuItem openAction = new JMenuItem("Open");
+        JMenuItem statisticsAction = new JMenuItem("Statistics");
         JMenuItem preferencesAction = new JMenuItem("Preferences");
         JMenuItem exitAction = new JMenuItem("Exit");
         JMenuItem helpAction = new JMenuItem("Help");
         fileMenu.add(openAction);
         fileMenu.add(preferencesAction);
+        fileMenu.add(statisticsAction);
         fileMenu.add(exitAction);
         helpMenu.add(helpAction);
 
         openAction.addActionListener(e -> {
             openLogFiles();
+        });
+        statisticsAction.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (dataHelper != null) {
+                    StatisticsDialog statisticsDialog = new StatisticsDialog(dataHelper.collectStatistics());
+                }
+            }
         });
         exitAction.addActionListener(e -> System.exit(0));
         preferencesAction.addActionListener(e -> {
@@ -585,9 +596,6 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         activeObjectsRoot = new JPanel();
         activeObjectsRoot.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
         rootPanel.add(activeObjectsRoot, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));
-        container = new JPanel();
-        container.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        activeObjectsRoot.add(container, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         scaleSlider = new JSlider();
         scaleSlider.setMaximum(10000);
         scaleSlider.setMinimum(1);
@@ -605,6 +613,9 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
         clearButton.setEnabled(false);
         clearButton.setText("Clear");
         activeObjectsRoot.add(clearButton, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        container = new JPanel();
+        container.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        activeObjectsRoot.add(container, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     }
 
     /**
