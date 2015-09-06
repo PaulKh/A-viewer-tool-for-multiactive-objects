@@ -8,13 +8,14 @@ import java.awt.event.ComponentListener;
  */
 public class RootPanelComponentlistener implements ComponentListener {
     private RootViewResizedCallback rootViewResizedCallback;
+
     public RootPanelComponentlistener(RootViewResizedCallback rootViewResizedCallback) {
         this.rootViewResizedCallback = rootViewResizedCallback;
     }
 
     @Override
     public void componentResized(ComponentEvent e) {
-        if (rootViewResizedCallback != null){
+        if (rootViewResizedCallback != null) {
             rootViewResizedCallback.rootViewResized();
         }
     }

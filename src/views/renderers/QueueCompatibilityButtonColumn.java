@@ -206,7 +206,7 @@ public class QueueCompatibilityButtonColumn extends AbstractCellEditor
     //
 //  Implement MouseListener interface
 //
-	/*
+    /*
 	 *  When the mouse is pressed the editor is invoked. If you then then drag
 	 *  the mouse to another cell before releasing it, the editor is still
 	 *  active. Make sure editing is stopped when the mouse is released.

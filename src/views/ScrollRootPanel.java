@@ -6,13 +6,11 @@ import utils.SizeHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 
 /**
  * Created by pkhvoros on 4/1/15.
  */
-public class ScrollRootPanel extends JPanel{
+public class ScrollRootPanel extends JPanel {
     private int flowX;
 
 
