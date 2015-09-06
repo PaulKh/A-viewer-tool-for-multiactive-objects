@@ -6,11 +6,13 @@ import utils.SizeHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 
 /**
  * Created by pkhvoros on 4/1/15.
  */
-public class ScrollRootPanel extends JPanel {
+public class ScrollRootPanel extends JPanel{
     private int flowX;
 
 
@@ -26,7 +28,6 @@ public class ScrollRootPanel extends JPanel {
             int x2 = SizeHelper.instance().convertTimeToLength(arrow.getArrow().getDeliveredTime()) + flowX;
             if (!(x1 <= 0 || x1 >= SizeHelper.instance().getTotalLength() || x2 <= 0 || x2 >= SizeHelper.instance().getTotalLength()))
                 drawArrowLine(g1, x1, arrow.getY1(), x2, arrow.getY2(), 6, 6);
-
         }
     }
 

@@ -19,6 +19,8 @@ import supportModel.OrderStateOfActiveObjects;
 import utils.*;
 import views.builders.ErrorDialogBuilder;
 import views.builders.QueuesDialogBuilder;
+import views.helpers.RootPanelComponentlistener;
+import views.helpers.RootViewResizedCallback;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -42,7 +44,7 @@ import java.util.List;
  */
 
 //This is the main frame of the application
-public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback, LockerButtonCallback {
+public class MainWindow extends JFrame implements ThreadEventClickedCallback, SwapButtonPressedListener, UpButtonPressedCallback, LockerButtonCallback, RootViewResizedCallback {
     MouseAdapter openLogFiles = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -253,6 +255,9 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
 
         GridBagLayout mainGridBagLayout = new GridBagLayout();
         scrollPaneRoot = new ScrollRootPanel(mainGridBagLayout);
+        RootPanelComponentlistener componentlistener = new RootPanelComponentlistener(this);
+        scrollPaneRoot.addComponentListener(componentlistener);
+
         mainScrollPane = new JScrollPane(scrollPaneRoot, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         titleScrollPane.getVerticalScrollBar().setModel(mainScrollPane.getVerticalScrollBar().getModel());
 
@@ -623,5 +628,10 @@ public class MainWindow extends JFrame implements ThreadEventClickedCallback, Sw
      */
     public JComponent $$$getRootComponent$$$() {
         return rootPanel;
+    }
+
+    @Override
+    public void rootViewResized() {
+        ArrowHandler.instance().updateArrows(flowPanels);
     }
 }
