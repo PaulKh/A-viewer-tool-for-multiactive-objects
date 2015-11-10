@@ -16,6 +16,7 @@ proguard/
 *.ipr
 *.iws
 .idea/
+.settings/
 
 .DS_Store
 .nfs*
